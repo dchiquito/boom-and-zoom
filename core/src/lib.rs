@@ -31,18 +31,12 @@ impl From<i8> for Position {
 impl std::fmt::Debug for Position {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let columns = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-        f.write_str(&format!(
-            "({},{}),{}{}",
-            self.x,
-            self.y,
-            columns[self.x as usize],
-            self.y + 1
-        ))
+        f.write_str(&format!("{}{}", columns[self.x as usize], self.y + 1))
     }
 }
-impl TryFrom<String> for Position {
+impl TryFrom<&str> for Position {
     type Error = ();
-    fn try_from(value: String) -> Result<Self, Self::Error> {
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
         let columns = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
         let mut chars = value.chars();
         let col = chars.next().ok_or(())?;
@@ -50,8 +44,8 @@ impl TryFrom<String> for Position {
         if chars.next().is_some() {
             Err(())
         } else {
-            let y = columns.iter().position(|cname| cname == &col).ok_or(())?;
-            let x = row.to_digit(10).ok_or(())? - 1;
+            let x = columns.iter().position(|cname| cname == &col).ok_or(())?;
+            let y = row.to_digit(10).ok_or(())? - 1;
             Ok((x as i8, y as i8).into())
         }
     }
@@ -61,7 +55,7 @@ impl Position {
         let x = self.x + dx;
         let y = self.y + dy;
         let index = x + (y * 8);
-        if !(0..=7).contains(&x) || !(0..=7).contains(&y) {
+        if !(0..8).contains(&x) || !(0..8).contains(&y) {
             None
         } else {
             Some(Position { x, y, index })
@@ -88,8 +82,8 @@ impl TryFrom<u8> for Height {
         }
     }
 }
-impl From<Height> for u8 {
-    fn from(height: Height) -> Self {
+impl From<&Height> for u8 {
+    fn from(height: &Height) -> Self {
         match height {
             Height::Dead => 0,
             Height::One => 1,
@@ -111,9 +105,9 @@ impl Height {
 
 #[derive(Clone, Debug)]
 pub struct Piece {
-    color: Color,
-    position: Position,
-    height: Height,
+    pub color: Color,
+    pub position: Position,
+    pub height: Height,
 }
 impl Piece {
     pub fn new(color: Color, position: (i8, i8)) -> Piece {
@@ -136,7 +130,7 @@ pub enum Move {
 
 #[derive(Clone)]
 pub struct Board {
-    pieces: [Piece; 8],
+    pub pieces: [Piece; 8],
 }
 impl Default for Board {
     fn default() -> Board {
@@ -168,7 +162,7 @@ impl Board {
         new_board
     }
     pub fn get_piece_at(&self, position: &Position) -> Option<usize> {
-        (0..=7).find(|&i| self.pieces[i].position.index == position.index)
+        (0..8).find(|&i| self.pieces[i].position.index == position.index)
     }
     pub fn valid_moves_for(&self, piece: &Piece) -> Vec<Move> {
         let piece_index = self
