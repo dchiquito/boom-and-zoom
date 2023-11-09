@@ -3,6 +3,14 @@ pub enum Color {
     White,
     Black,
 }
+impl Color {
+    pub fn invert(&self) -> Color {
+        match self {
+            Color::White => Color::Black,
+            Color::Black => Color::White,
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct Position {
@@ -251,6 +259,44 @@ impl Board {
         }
         moves
     }
+    pub fn winner(&self) -> Option<Color> {
+        let has_white_pieces = self
+            .pieces
+            .iter()
+            .any(|p| p.color == Color::White && p.height != Height::Dead);
+        if !has_white_pieces {
+            return Some(Color::Black);
+        }
+        let has_black_pieces = self
+            .pieces
+            .iter()
+            .any(|p| p.color == Color::Black && p.height != Height::Dead);
+        if !has_black_pieces {
+            return Some(Color::White);
+        }
+        None
+    }
+}
+
+pub trait GamePlayer {
+    fn decide(&mut self, board: &Board, color: &Color) -> Board;
+}
+
+pub fn play_game<W, B>(mut white_player: W, mut black_player: B) -> Color
+where
+    W: GamePlayer,
+    B: GamePlayer,
+{
+    let mut board = Board::default();
+    let mut turn = Color::White;
+    while board.winner().is_none() {
+        board = match turn {
+            Color::White => white_player.decide(&board, &turn),
+            Color::Black => black_player.decide(&board, &turn),
+        };
+        turn = turn.invert();
+    }
+    board.winner().expect("there must be a winner")
 }
 
 #[cfg(test)]
