@@ -12,7 +12,7 @@ impl Color {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct Position {
     index: i8,
     x: i8,
@@ -142,7 +142,7 @@ impl Piece {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum Move {
     Boom(usize),
     Zoom(usize, Position),
@@ -193,7 +193,9 @@ impl Board {
         new_board
     }
     pub fn get_piece_at(&self, position: &Position) -> Option<usize> {
-        (0..8).find(|&i| self.pieces[i].position.index == position.index)
+        (0..8).find(|&i| {
+            self.pieces[i].height != Height::Dead && self.pieces[i].position.index == position.index
+        })
     }
     pub fn valid_moves_for(&self, piece: &Piece) -> Vec<Move> {
         let piece_index = self
@@ -218,7 +220,7 @@ impl Board {
         for (dx, dy) in directions {
             // Set our initial range and position
             let mut position = piece.position.clone().offset(dx, dy);
-            let mut range = piece.height.boom();
+            let mut range = piece.height.clone();
             while range != Height::Dead {
                 // This optional ensures we don't move off the edge
                 // if let Some(pos) = &position {
