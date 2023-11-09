@@ -12,6 +12,13 @@ impl Color {
     }
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum Winner {
+    White,
+    Black,
+    Draw,
+}
+
 #[derive(Clone, Eq, PartialEq)]
 pub struct Position {
     index: i8,
@@ -184,8 +191,10 @@ impl Board {
                 new_board.pieces[*idx].position = position.clone();
             }
             Move::Score(idx) => {
-                if new_board.pieces[*idx].color == Color::White {
-                    new_board.white_score += Into::<u8>::into(&new_board.pieces[*idx].height);
+                let points_scored = Into::<u8>::into(&new_board.pieces[*idx].height);
+                match new_board.pieces[*idx].color {
+                    Color::White => new_board.white_score += points_scored,
+                    Color::Black => new_board.black_score += points_scored,
                 }
                 new_board.pieces[*idx].height = Height::Dead;
             }
@@ -200,7 +209,7 @@ impl Board {
     pub fn valid_moves_for(&self, piece: &Piece) -> Vec<Move> {
         let piece_index = self
             .get_piece_at(&piece.position)
-            .expect("piece needs to be one the board");
+            .expect("piece needs to be on the board");
         if piece.height == Height::Dead {
             return vec![];
         }
@@ -261,22 +270,24 @@ impl Board {
         }
         moves
     }
-    pub fn winner(&self) -> Option<Color> {
+    pub fn winner(&self) -> Option<Winner> {
         let has_white_pieces = self
             .pieces
             .iter()
             .any(|p| p.color == Color::White && p.height != Height::Dead);
-        if !has_white_pieces {
-            return Some(Color::Black);
-        }
         let has_black_pieces = self
             .pieces
             .iter()
             .any(|p| p.color == Color::Black && p.height != Height::Dead);
-        if !has_black_pieces {
-            return Some(Color::White);
+        if !has_white_pieces || !has_black_pieces {
+            Some(match self.white_score.cmp(&self.black_score) {
+                std::cmp::Ordering::Less => Winner::Black,
+                std::cmp::Ordering::Equal => Winner::Draw,
+                std::cmp::Ordering::Greater => Winner::White,
+            })
+        } else {
+            None
         }
-        None
     }
 }
 
@@ -284,21 +295,50 @@ pub trait GamePlayer {
     fn decide(&mut self, board: &Board, color: &Color) -> Board;
 }
 
-pub fn play_game<W, B>(mut white_player: W, mut black_player: B) -> Color
+pub struct Game<W: GamePlayer, B: GamePlayer> {
+    board: Board,
+    white_player: W,
+    black_player: B,
+    turn: Color,
+}
+impl<W, B> Game<W, B>
 where
     W: GamePlayer,
     B: GamePlayer,
 {
-    let mut board = Board::default();
-    let mut turn = Color::White;
-    while board.winner().is_none() {
-        board = match turn {
-            Color::White => white_player.decide(&board, &turn),
-            Color::Black => black_player.decide(&board, &turn),
-        };
-        turn = turn.invert();
+    pub fn new(white_player: W, black_player: B) -> Self {
+        Self {
+            board: Board::default(),
+            white_player,
+            black_player,
+            turn: Color::White,
+        }
     }
-    board.winner().expect("there must be a winner")
+    pub fn play_turn(&mut self) -> Option<Winner> {
+        self.board = match self.turn {
+            Color::White => self.white_player.decide(&self.board, &self.turn),
+            Color::Black => self.black_player.decide(&self.board, &self.turn),
+        };
+        self.turn = self.turn.invert();
+        self.winner()
+    }
+    pub fn finish_game(&mut self) -> Winner {
+        while self.board.winner().is_none() {
+            self.play_turn();
+        }
+        self.winner().expect("there must be a winner")
+    }
+    pub fn winner(&self) -> Option<Winner> {
+        self.board.winner()
+    }
+
+    pub fn board(&self) -> &Board {
+        &self.board
+    }
+
+    pub fn turn(&self) -> &Color {
+        &self.turn
+    }
 }
 
 #[cfg(test)]

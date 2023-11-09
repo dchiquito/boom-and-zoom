@@ -1,8 +1,10 @@
-use baz_core::{play_game, Board, Color, GamePlayer, Height, Move, Position};
+use baz_core::{Board, Color, Game, GamePlayer, Height, Move, Position};
+use rand::prelude::*;
 
 struct StdinHumanPlayer();
 
 fn print_board(board: &Board) {
+    println!("White: {}  Black {}", board.white_score, board.black_score);
     for y in (0..8).rev() {
         print!("{}| ", y + 1);
         for x in 0..8 {
@@ -37,12 +39,16 @@ impl GamePlayer for StdinHumanPlayer {
                 println!("Choose one of your pieces");
                 continue;
             }
-            let second_position = StdinHumanPlayer::pick_position();
-            let mov = if let Some(second_piece_index) = board.get_piece_at(&second_position) {
-                Move::Boom(second_piece_index)
+            let second_position_target = StdinHumanPlayer::pick_position();
+            let mov = if let HumanMoveTarget::Position(second_position) = second_position_target {
+                if let Some(second_piece_index) = board.get_piece_at(&second_position) {
+                    Move::Boom(second_piece_index)
+                } else {
+                    // Selected one of our pieces, zoom it
+                    Move::Zoom(first_piece_index, second_position)
+                }
             } else {
-                // Selected one of our pieces, zoom it
-                Move::Zoom(first_piece_index, second_position)
+                Move::Score(first_piece_index)
             };
             if board
                 .valid_moves_for(&board.pieces[first_piece_index])
@@ -57,8 +63,13 @@ impl GamePlayer for StdinHumanPlayer {
     }
 }
 
+enum HumanMoveTarget {
+    Position(Position),
+    ScoreZone,
+}
+
 impl StdinHumanPlayer {
-    fn pick_position() -> Position {
+    fn pick_position() -> HumanMoveTarget {
         let stdin = std::io::stdin();
         let mut buffer = String::new();
         let mut position: Result<Position, ()> = Err(());
@@ -67,17 +78,23 @@ impl StdinHumanPlayer {
                 .read_line(&mut buffer)
                 .map_err(|_| ())
                 .expect("no IO error please");
-            position = buffer.trim().try_into();
+            let trim_buffer = buffer.trim();
+            if trim_buffer == "s" {
+                return HumanMoveTarget::ScoreZone;
+            }
+            position = trim_buffer.try_into();
             if position.is_err() {
                 println!("Not a valid square");
             }
         }
-        position.unwrap()
+        HumanMoveTarget::Position(position.unwrap())
     }
     fn pick_piece(board: &Board) -> usize {
         let mut piece_index = None;
         while piece_index.is_none() {
-            piece_index = board.get_piece_at(&Self::pick_position());
+            if let HumanMoveTarget::Position(position) = Self::pick_position() {
+                piece_index = board.get_piece_at(&position);
+            }
             if piece_index.is_none() {
                 println!("No piece there")
             }
@@ -86,13 +103,51 @@ impl StdinHumanPlayer {
     }
 }
 
+struct RandomPlayer();
+
+impl GamePlayer for RandomPlayer {
+    fn decide(&mut self, board: &Board, color: &Color) -> Board {
+        let mut rng = rand::thread_rng();
+        let piece = board
+            .pieces
+            .iter()
+            .filter(|p| p.height != Height::Dead)
+            .filter(|p| &p.color == color)
+            .choose(&mut rng)
+            .unwrap();
+        let moves = board.valid_moves_for(piece);
+        let mov = moves.choose(&mut rng).unwrap();
+        board.apply_move(mov)
+    }
+}
+
 fn main() -> std::io::Result<()> {
-    println!("Hello, world!");
-    // let board = Board::default();
-    // print_board(&board);
-    // let pos = read_position_from_input().unwrap();
-    // let x = board.get_piece_at(&pos);
-    play_game(StdinHumanPlayer(), StdinHumanPlayer());
+    // let mut game = Game::new(RandomPlayer(), StdinHumanPlayer());
+    let mut game = Game::new(RandomPlayer(), RandomPlayer());
+    game.finish_game();
+    // while game.winner().is_none() {
+    // game.play_turn();
+    // print_board(game.board());
+    // let stdin = std::io::stdin();
+    // let mut buffer = String::new();
+    // let _ = stdin.read_line(&mut buffer);
+    // }
+    println!("Winner: {:?}", game.winner());
+
+    let mut whites = 0;
+    let mut blacks = 0;
+    let mut draws = 0;
+    for _ in 0..1000 {
+        let mut game = Game::new(RandomPlayer(), RandomPlayer());
+        match game.finish_game() {
+            baz_core::Winner::White => whites += 1,
+            baz_core::Winner::Black => blacks += 1,
+            baz_core::Winner::Draw => draws += 1,
+        }
+    }
+    println!("White wins: {}", whites);
+    println!("Black wins: {}", blacks);
+    println!("Draws: {}", draws);
 
     Ok(())
 }
