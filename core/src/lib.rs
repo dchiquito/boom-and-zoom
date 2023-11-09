@@ -51,16 +51,28 @@ impl TryFrom<&str> for Position {
     }
 }
 impl Position {
-    pub fn offset(&self, dx: i8, dy: i8) -> Option<Position> {
+    pub fn offset(&self, dx: i8, dy: i8) -> PositionOffset {
         let x = self.x + dx;
         let y = self.y + dy;
         let index = x + (y * 8);
-        if !(0..8).contains(&x) || !(0..8).contains(&y) {
-            None
+        if y == -1 && (-1..9).contains(&x) {
+            // Meaning black gets points for going here
+            PositionOffset::ScoreZone(Color::Black)
+        } else if y == 8 && (-1..9).contains(&x) {
+            // Meaning white gets points for going here
+            PositionOffset::ScoreZone(Color::White)
+        } else if !(0..8).contains(&x) || !(0..8).contains(&y) {
+            PositionOffset::Invalid
         } else {
-            Some(Position { x, y, index })
+            PositionOffset::Valid(Position { x, y, index })
         }
     }
+}
+
+pub enum PositionOffset {
+    Valid(Position),
+    ScoreZone(Color),
+    Invalid,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -126,11 +138,14 @@ impl Piece {
 pub enum Move {
     Boom(usize),
     Zoom(usize, Position),
+    Score(usize),
 }
 
 #[derive(Clone)]
 pub struct Board {
     pub pieces: [Piece; 8],
+    pub black_score: u8,
+    pub white_score: u8,
 }
 impl Default for Board {
     fn default() -> Board {
@@ -145,6 +160,8 @@ impl Default for Board {
                 Piece::new(Color::Black, (4, 7)),
                 Piece::new(Color::Black, (5, 7)),
             ],
+            black_score: 0,
+            white_score: 0,
         }
     }
 }
@@ -157,6 +174,12 @@ impl Board {
             }
             Move::Zoom(idx, position) => {
                 new_board.pieces[*idx].position = position.clone();
+            }
+            Move::Score(idx) => {
+                if new_board.pieces[*idx].color == Color::White {
+                    new_board.white_score += Into::<u8>::into(&new_board.pieces[*idx].height);
+                }
+                new_board.pieces[*idx].height = Height::Dead;
             }
         }
         new_board
@@ -182,29 +205,46 @@ impl Board {
             (-1, 1),
         ];
         let mut moves = vec![];
+        let mut has_scored = false;
         // Attempt movement in every direction
         for (dx, dy) in directions {
             // Set our initial range and position
-            let mut range = piece.height.clone();
-            let mut position = Some(piece.position.clone());
-            while range != Height::Dead && position.is_some() {
-                // Increment our position in the current direction and decrement our
-                // range
-                position = position.expect("already checked is_some").offset(dx, dy);
-                range = range.boom();
+            let mut position = piece.position.clone().offset(dx, dy);
+            let mut range = piece.height.boom();
+            while range != Height::Dead {
                 // This optional ensures we don't move off the edge
-                if let Some(pos) = &position {
-                    // Check if we have encountered another piece
-                    if let Some(piece_at_pos_index) = self.get_piece_at(pos) {
-                        // If the piece is an enemy, we can boom it
-                        if self.pieces[piece_at_pos_index].color != piece.color {
-                            moves.push(Move::Boom(piece_at_pos_index));
+                // if let Some(pos) = &position {
+                match &position {
+                    PositionOffset::Valid(pos) => {
+                        // Check if we have encountered another piece
+                        if let Some(piece_at_pos_index) = self.get_piece_at(pos) {
+                            // If the piece is an enemy, we can boom it
+                            if self.pieces[piece_at_pos_index].color != piece.color {
+                                moves.push(Move::Boom(piece_at_pos_index));
+                            }
+                            // No jumping over pieces, so we are done with this direction
+                            break;
+                        } else {
+                            // Empty square, we can move there
+                            moves.push(Move::Zoom(piece_index, pos.clone()));
+                            // Increment our position and decrement our range
+                            position = pos.offset(dx, dy);
+                            range = range.boom();
                         }
-                        // No jumping over pieces
+                    }
+                    PositionOffset::ScoreZone(color) => {
+                        if !has_scored && color == &piece.color {
+                            moves.push(Move::Score(piece_index));
+                            // We only want to have scoring as an option once, even if
+                            // it's possible to score in multiple different ways
+                            has_scored = true;
+                        }
+                        // We've reached the score zone, can't move any further than that
                         break;
-                    } else {
-                        // Empty square, we can move there
-                        moves.push(Move::Zoom(piece_index, pos.clone()))
+                    }
+                    PositionOffset::Invalid => {
+                        // We've walked off the side of the board, so stop
+                        break;
                     }
                 }
             }
@@ -219,10 +259,9 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let result = 2 + 2;
         let board = Board::default();
         println!("{:?}", board.pieces[0].position);
         println!("{:?}", board.valid_moves_for(&board.pieces[0]));
-        assert_eq!(result, 5);
+        assert_eq!(4, 5);
     }
 }
