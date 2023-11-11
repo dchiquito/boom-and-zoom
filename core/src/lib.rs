@@ -214,6 +214,13 @@ impl Board {
             self.pieces[i].height != Height::Dead && self.pieces[i].position.index == position.index
         })
     }
+    pub fn legal_moves(&self, color: &Color) -> Vec<Move> {
+        self.pieces
+            .iter()
+            .filter(|p| &p.color == color)
+            .flat_map(|p| self.legal_moves_for(p))
+            .collect()
+    }
     pub fn legal_moves_for(&self, piece: &Piece) -> Vec<Move> {
         let piece_index = self
             .get_piece_at(&piece.position)
