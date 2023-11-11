@@ -19,7 +19,7 @@ pub enum Winner {
     Draw,
 }
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Position {
     index: i8,
     x: i8,
@@ -81,6 +81,14 @@ impl Position {
         } else {
             PositionOffset::Valid(Position { x, y, index })
         }
+    }
+
+    pub fn x(&self) -> i8 {
+        self.x
+    }
+
+    pub fn y(&self) -> i8 {
+        self.y
     }
 }
 
@@ -149,7 +157,7 @@ impl Piece {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Move {
     Boom(usize),
     Zoom(usize, Position),
@@ -188,7 +196,7 @@ impl Board {
                 new_board.pieces[*idx].boom();
             }
             Move::Zoom(idx, position) => {
-                new_board.pieces[*idx].position = position.clone();
+                new_board.pieces[*idx].position = *position;
             }
             Move::Score(idx) => {
                 let points_scored = Into::<u8>::into(&new_board.pieces[*idx].height);
@@ -292,7 +300,7 @@ impl Board {
 }
 
 pub trait GamePlayer {
-    fn decide(&mut self, board: &Board, color: &Color) -> Board;
+    fn decide(&mut self, board: &Board, color: &Color) -> Move;
 }
 
 pub struct Game<W: GamePlayer, B: GamePlayer> {
@@ -315,10 +323,11 @@ where
         }
     }
     pub fn play_turn(&mut self) -> Option<Winner> {
-        self.board = match self.turn {
+        let mov = match self.turn {
             Color::White => self.white_player.decide(&self.board, &self.turn),
             Color::Black => self.black_player.decide(&self.board, &self.turn),
         };
+        self.board = self.board.apply_move(&mov);
         self.turn = self.turn.invert();
         self.winner()
     }

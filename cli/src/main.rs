@@ -1,5 +1,5 @@
 use baz_core::{Board, Color, Game, GamePlayer, Height, Move, Position};
-use baz_players::RandomPlayer;
+use baz_players::{ForwardRandomPlayer, RandomPlayer};
 
 struct StdinHumanPlayer();
 
@@ -29,7 +29,7 @@ fn print_board(board: &Board) {
 }
 
 impl GamePlayer for StdinHumanPlayer {
-    fn decide(&mut self, board: &Board, color: &Color) -> Board {
+    fn decide(&mut self, board: &Board, color: &Color) -> Move {
         print_board(board);
         println!("{:?}'s turn", color);
         loop {
@@ -55,7 +55,7 @@ impl GamePlayer for StdinHumanPlayer {
                 .iter()
                 .any(|m| m == &mov)
             {
-                return board.apply_move(&mov);
+                return mov;
             } else {
                 println!("Invalid move");
             }
@@ -119,8 +119,8 @@ fn main() -> std::io::Result<()> {
     let mut whites = 0;
     let mut blacks = 0;
     let mut draws = 0;
-    for _ in 0..1000 {
-        let mut game = Game::new(RandomPlayer(), RandomPlayer());
+    for _ in 0..10000 {
+        let mut game = Game::new(ForwardRandomPlayer(), StdinHumanPlayer());
         match game.finish_game() {
             baz_core::Winner::White => whites += 1,
             baz_core::Winner::Black => blacks += 1,
