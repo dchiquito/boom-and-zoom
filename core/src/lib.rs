@@ -127,6 +127,28 @@ impl From<&Height> for u8 {
         }
     }
 }
+impl TryFrom<i8> for Height {
+    type Error = ();
+    fn try_from(height: i8) -> Result<Self, Self::Error> {
+        match height {
+            0 => Ok(Height::Dead),
+            1 => Ok(Height::One),
+            2 => Ok(Height::Two),
+            3 => Ok(Height::Three),
+            _ => Err(()),
+        }
+    }
+}
+impl From<&Height> for i8 {
+    fn from(height: &Height) -> Self {
+        match height {
+            Height::Dead => 0,
+            Height::One => 1,
+            Height::Two => 2,
+            Height::Three => 3,
+        }
+    }
+}
 impl Height {
     pub fn boom(&self) -> Height {
         match self {
@@ -222,12 +244,12 @@ impl Board {
             .collect()
     }
     pub fn legal_moves_for(&self, piece: &Piece) -> Vec<Move> {
-        let piece_index = self
-            .get_piece_at(&piece.position)
-            .expect("piece needs to be on the board");
         if piece.height == Height::Dead {
             return vec![];
         }
+        let piece_index = self
+            .get_piece_at(&piece.position)
+            .expect("piece needs to be on the board");
         let directions = [
             (-1, 0),
             (-1, -1),
