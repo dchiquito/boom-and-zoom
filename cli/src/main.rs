@@ -51,7 +51,7 @@ impl GamePlayer for StdinHumanPlayer {
                 Move::Score(first_piece_index)
             };
             if board
-                .valid_moves_for(&board.pieces[first_piece_index])
+                .legal_moves_for(&board.pieces[first_piece_index])
                 .iter()
                 .any(|m| m == &mov)
             {

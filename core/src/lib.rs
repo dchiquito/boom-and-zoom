@@ -214,7 +214,7 @@ impl Board {
             self.pieces[i].height != Height::Dead && self.pieces[i].position.index == position.index
         })
     }
-    pub fn valid_moves_for(&self, piece: &Piece) -> Vec<Move> {
+    pub fn legal_moves_for(&self, piece: &Piece) -> Vec<Move> {
         let piece_index = self
             .get_piece_at(&piece.position)
             .expect("piece needs to be on the board");
@@ -358,7 +358,7 @@ mod tests {
     fn it_works() {
         let board = Board::default();
         println!("{:?}", board.pieces[0].position);
-        println!("{:?}", board.valid_moves_for(&board.pieces[0]));
+        println!("{:?}", board.legal_moves_for(&board.pieces[0]));
         assert_eq!(4, 5);
     }
 }
