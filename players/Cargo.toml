@@ -1,5 +1,5 @@
 [package]
-name = "baz_cli"
+name = "baz_players"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 baz_core = { path = "../core" }
-baz_players = { path = "../players" }
+rand = "0.8.5"

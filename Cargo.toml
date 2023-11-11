@@ -3,5 +3,6 @@
 members = [
   "cli",
   "core",
+  "players",
 ]
 resolver = "2"
