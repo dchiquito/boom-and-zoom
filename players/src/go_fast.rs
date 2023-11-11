@@ -31,3 +31,20 @@ impl GoFastHeuristic {
         HeuristicPlayer::new(GoFastHeuristic())
     }
 }
+
+pub struct GoFasterHeuristic();
+
+impl Heuristic<i8> for GoFasterHeuristic {
+    fn evaluate(&mut self, board: &baz_core::Board, color: &Color) -> i8 {
+        let mut heuristic = GoFastHeuristic();
+        // let a = heuristic.evaluate(board, color);
+        // let b = heuristic.evaluate(board, &color.invert());
+        // println!("{} - {} = {}", a, b, a - b);
+        heuristic.evaluate(board, color) - heuristic.evaluate(board, &color.invert())
+    }
+}
+impl GoFasterHeuristic {
+    pub fn player() -> HeuristicPlayer<GoFasterHeuristic, i8> {
+        HeuristicPlayer::new(GoFasterHeuristic())
+    }
+}
