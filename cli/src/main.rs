@@ -120,7 +120,8 @@ fn main() -> std::io::Result<()> {
     let mut blacks = 0;
     let mut draws = 0;
     for _ in 0..1000 {
-        let mut game = Game::new(GoFastHeuristic::player(), GoFasterHeuristic::player());
+        // let mut game = Game::new(GoFastHeuristic::player(0), GoFasterHeuristic::player());
+        let mut game = Game::new(StdinHumanPlayer(), GoFasterHeuristic::player(1));
         match game.finish_game() {
             baz_core::Winner::White => whites += 1,
             baz_core::Winner::Black => blacks += 1,

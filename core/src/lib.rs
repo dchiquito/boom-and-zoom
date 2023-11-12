@@ -186,7 +186,7 @@ pub enum Move {
     Score(usize),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Board {
     pub pieces: [Piece; 8],
     pub black_score: u8,

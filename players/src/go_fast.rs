@@ -27,11 +27,13 @@ impl Heuristic<i8> for GoFastHeuristic {
 }
 
 impl GoFastHeuristic {
-    pub fn player() -> HeuristicPlayer<GoFastHeuristic, i8> {
-        HeuristicPlayer::new(GoFastHeuristic())
+    pub fn player(depth: usize) -> HeuristicPlayer<GoFastHeuristic, i8> {
+        HeuristicPlayer::new(GoFastHeuristic(), depth)
     }
 }
 
+// Try to always end the game faster than the opponent. This enables strategic booming instead of
+// only zooming as fast as possible.
 pub struct GoFasterHeuristic();
 
 impl Heuristic<i8> for GoFasterHeuristic {
@@ -44,7 +46,7 @@ impl Heuristic<i8> for GoFasterHeuristic {
     }
 }
 impl GoFasterHeuristic {
-    pub fn player() -> HeuristicPlayer<GoFasterHeuristic, i8> {
-        HeuristicPlayer::new(GoFasterHeuristic())
+    pub fn player(depth: usize) -> HeuristicPlayer<GoFasterHeuristic, i8> {
+        HeuristicPlayer::new(GoFasterHeuristic(), depth)
     }
 }
