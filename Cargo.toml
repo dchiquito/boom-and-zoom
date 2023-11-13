@@ -3,6 +3,7 @@
 members = [
   "cli",
   "core",
+  "godot_binding",
   "players",
 ]
 resolver = "2"
