@@ -9,5 +9,5 @@ func _ready():
 			if (x+y) % 2 == 0:
 				tile.color = Color(0.9, 0.9, 0.9)
 			else:
-				tile.color = Color(0.2, 0.2, 0.2)
+				tile.color = Color(0.4, 0.4, 0.4)
 			add_child(tile)

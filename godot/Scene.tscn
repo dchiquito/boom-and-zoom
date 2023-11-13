@@ -6,7 +6,9 @@
 [node name="Node2D" type="Node2D"]
 script = ExtResource("1_y5cuu")
 
+[node name="GodotGameBoard" type="GodotGameBoard" parent="."]
+
 [node name="BoardSquares" type="Node2D" parent="."]
 script = ExtResource("2_hjvyv")
 
-[node name="Player" type="Player" parent="."]
+[node name="Pieces" type="Node2D" parent="."]

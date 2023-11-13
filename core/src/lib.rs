@@ -231,6 +231,9 @@ impl Board {
         }
         new_board
     }
+    pub fn get_piece(&self, index: usize) -> &Piece {
+        &self.pieces[index]
+    }
     pub fn get_piece_at(&self, position: &Position) -> Option<usize> {
         (0..8).find(|&i| {
             self.pieces[i].height != Height::Dead && self.pieces[i].position.index == position.index
