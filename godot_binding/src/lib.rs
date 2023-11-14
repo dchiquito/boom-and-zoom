@@ -164,9 +164,17 @@ impl GodotGameBoard {
 
     #[func]
     fn score(&mut self, index: i64) {
-        // self.tx.send(Move::Score(index as usize)).unwrap()
-        self.game.apply_move(&Move::Score(index as usize));
-        self.game.play_turn();
+        let mov = Move::Score(index as usize);
+        if self
+            .game
+            .board()
+            .legal_moves_for(self.game.board().get_piece(index as usize))
+            .iter()
+            .any(|m| *m == mov)
+        {
+            self.game.apply_move(&mov);
+            self.game.play_turn();
+        }
     }
 }
 

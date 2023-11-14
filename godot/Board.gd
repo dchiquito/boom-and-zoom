@@ -51,7 +51,10 @@ func _input(event):
 			else:
 				selected_piece = NOT_SELECTED
 		else:
-			gameboard.move_or_boom(selected_piece, board_coords)
+			if board_coords.y >= 8:
+				gameboard.score(selected_piece)
+			else:
+				gameboard.move_or_boom(selected_piece, board_coords)
 			selected_piece = NOT_SELECTED
 			update_pieces()
 		update_decorations()
