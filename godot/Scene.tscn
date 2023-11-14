@@ -9,8 +9,11 @@ script = ExtResource("1_y5cuu")
 [node name="GodotGameBoard" type="GodotGameBoard" parent="."]
 
 [node name="BoardSquares" type="Node2D" parent="."]
+position = Vector2(0, 100)
 script = ExtResource("2_hjvyv")
 
 [node name="Pieces" type="Node2D" parent="."]
+position = Vector2(0, 100)
 
 [node name="Decorations" type="Node2D" parent="."]
+position = Vector2(0, 100)

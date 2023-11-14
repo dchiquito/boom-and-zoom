@@ -41,12 +41,15 @@ func update_decorations():
 
 func _input(event):
 	if event is InputEventMouseButton and event.pressed:
-		var board_coords = Vector2(floor(event.position.x / 100), 7 - floor(event.position.y / 100))
+		var board_coords = Vector2(floor(event.position.x / 100), 8 - floor(event.position.y / 100))
 		if selected_piece == NOT_SELECTED:
 			selected_piece = gameboard.get_piece_at(board_coords)
-			if selected_piece != NOT_SELECTED:
+			# TODO for now only white pieces are selectable
+			if selected_piece != NOT_SELECTED and gameboard.is_piece_white(selected_piece):
 				highlight_coords = board_coords
 				legal_moves = gameboard.legal_moves(selected_piece)
+			else:
+				selected_piece = NOT_SELECTED
 		else:
 			gameboard.move_or_boom(selected_piece, board_coords)
 			selected_piece = NOT_SELECTED

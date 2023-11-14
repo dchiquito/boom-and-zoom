@@ -141,6 +141,10 @@ impl GodotGameBoard {
         // } else {
         //     self.tx.send(Move::Zoom(index as usize, position)).unwrap()
         // }
+        let piece = self.game.board().get_piece(index as usize);
+        if &piece.color != self.game.turn() {
+            return;
+        }
         let mov = if let Some(boomed_piece) = self.game.board().get_piece_at(&position) {
             Move::Boom(boomed_piece)
         } else {
@@ -149,7 +153,7 @@ impl GodotGameBoard {
         if self
             .game
             .board()
-            .legal_moves_for(self.game.board().get_piece(index as usize))
+            .legal_moves_for(piece)
             .iter()
             .any(|m| *m == mov)
         {
