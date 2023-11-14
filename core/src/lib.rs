@@ -359,9 +359,12 @@ where
             Color::White => self.white_player.decide(&self.board, &self.turn),
             Color::Black => self.black_player.decide(&self.board, &self.turn),
         };
-        self.board = self.board.apply_move(&mov);
-        self.turn = self.turn.invert();
+        self.apply_move(&mov);
         self.winner()
+    }
+    pub fn apply_move(&mut self, mov: &Move) {
+        self.board = self.board.apply_move(mov);
+        self.turn = self.turn.invert();
     }
     pub fn finish_game(&mut self) -> Winner {
         while self.board.winner().is_none() {
