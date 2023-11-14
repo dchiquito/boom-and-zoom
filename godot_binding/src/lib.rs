@@ -122,8 +122,16 @@ impl GodotGameBoard {
         } else {
             Move::Zoom(index as usize, position)
         };
-        self.game.apply_move(&mov);
-        self.game.play_turn();
+        if self
+            .game
+            .board()
+            .legal_moves_for(self.game.board().get_piece(index as usize))
+            .iter()
+            .any(|m| *m == mov)
+        {
+            self.game.apply_move(&mov);
+            self.game.play_turn();
+        }
     }
 
     #[func]

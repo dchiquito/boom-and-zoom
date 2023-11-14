@@ -25,7 +25,6 @@ func update_pieces():
 func _input(event):
 	if event is InputEventMouseButton and event.pressed:
 		var board_coords = Vector2(event.position.x / 100, 8 - (event.position.y / 100))
-		print(board_coords)
 		if selected_piece == NOT_SELECTED:
 			selected_piece = gameboard.get_piece_at(board_coords)
 		else:
