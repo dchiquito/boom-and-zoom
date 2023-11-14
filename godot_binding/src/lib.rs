@@ -109,6 +109,30 @@ impl GodotGameBoard {
     }
 
     #[func]
+    fn legal_moves(&self, index: i64) -> Array<Vector2> {
+        self.game
+            .board()
+            .legal_moves_for(self.game.board().get_piece(index as usize))
+            .iter()
+            .map(|m| match m {
+                Move::Boom(i) => {
+                    let pos = self.game.board().get_piece(*i).position;
+                    Vector2 {
+                        x: pos.x() as f32,
+                        y: pos.y() as f32,
+                    }
+                }
+                Move::Zoom(_i, pos) => Vector2 {
+                    x: pos.x() as f32,
+                    y: pos.y() as f32,
+                },
+                Move::Score(_i) => Vector2 { x: -1.0, y: -1.0 },
+            })
+            .collect()
+        // Array::new()
+    }
+
+    #[func]
     fn move_or_boom(&mut self, index: i64, board_coords: Vector2) {
         // let game = self.game.lock().unwrap();
         let position = (board_coords.x as i8, board_coords.y as i8).into();

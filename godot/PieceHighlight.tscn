@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://dg0078mr3w0ry"]
+
+[node name="PieceHighlight" type="ColorRect"]
+custom_minimum_size = Vector2(100, 100)
+color = Color(0.468643, 0.551366, 0.291808, 0.501961)

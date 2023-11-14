@@ -12,3 +12,5 @@ script = ExtResource("1_y5cuu")
 script = ExtResource("2_hjvyv")
 
 [node name="Pieces" type="Node2D" parent="."]
+
+[node name="Decorations" type="Node2D" parent="."]
