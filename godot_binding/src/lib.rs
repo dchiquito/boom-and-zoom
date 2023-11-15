@@ -109,6 +109,16 @@ impl GodotGameBoard {
     }
 
     #[func]
+    fn white_score(&self) -> i64 {
+        self.game.board().white_score as i64
+    }
+
+    #[func]
+    fn black_score(&self) -> i64 {
+        self.game.board().black_score as i64
+    }
+
+    #[func]
     fn legal_moves(&self, index: i64) -> Array<Vector2> {
         self.game
             .board()

@@ -3,6 +3,8 @@ extends Node2D
 @onready var gameboard = $GodotGameBoard
 @onready var pieces = $Pieces
 @onready var decorations = $Decorations
+@onready var white_score = $WhiteScore
+@onready var black_score = $BlackScore
 var game_piece_scene = preload("res://GamePiece.tscn")
 var legal_move_indicator_scene = preload("res://LegalMoveIndicator.tscn")
 var piece_highlight_scene = preload("res://PieceHighlight.tscn")
@@ -38,6 +40,8 @@ func update_decorations():
 			var indicator = legal_move_indicator_scene.instantiate()
 			indicator.position = Vector2(100 * move.x, 100 * (7-move.y))
 			decorations.add_child(indicator)
+	white_score.text = str(gameboard.white_score())
+	black_score.text = str(gameboard.black_score())
 
 func _input(event):
 	if event is InputEventMouseButton and event.pressed:
