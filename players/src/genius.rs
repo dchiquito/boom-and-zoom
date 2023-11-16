@@ -1,7 +1,8 @@
 use baz_core::{Board, Color, Height, Move, Piece};
+use num::traits::Inv;
 use num::{rational::Rational32, ToPrimitive};
 
-use crate::heuristic::{Heuristic, HeuristicPlayer};
+use crate::heuristic::{Heuristic, HeuristicPlayer, SymmetricalHeuristic};
 /**
  * Let's put down some thoughts about how this genius heuristic will work.
  *
@@ -103,7 +104,7 @@ use crate::heuristic::{Heuristic, HeuristicPlayer};
 pub struct GeniusHeuristic();
 
 impl Heuristic<Rational32> for GeniusHeuristic {
-    fn evaluate(&mut self, board: &baz_core::Board, color: &baz_core::Color) -> Rational32 {
+    fn log_estimate(&self, board: &baz_core::Board, color: &baz_core::Color) {
         let (mut our_score, our_turns) = GeniusHeuristic::estimate_score_and_turns(board, color);
         let (mut their_score, their_turns) =
             GeniusHeuristic::estimate_score_and_turns(board, &color.invert());
@@ -116,20 +117,45 @@ impl Heuristic<Rational32> for GeniusHeuristic {
         }
         let estimate = our_score - their_score;
         println!(
-            "Our score: {} Their score: {}, turns 'till the end: {} estimate: {}",
+            "AI estimated score: {}\nOpponent score: {}\nTurns remaining: {}\nAI is winning by: {}\n",
             our_score.to_f64().unwrap(),
             their_score.to_f64().unwrap(),
             min_turns.to_f64().unwrap(),
             estimate.to_f64().unwrap(),
         );
-        estimate
+    }
+    fn evaluate(&mut self, board: &baz_core::Board, color: &baz_core::Color) -> Rational32 {
+        let (mut our_score, our_turns) = GeniusHeuristic::estimate_score_and_turns(board, color);
+        let (mut their_score, their_turns) =
+            GeniusHeuristic::estimate_score_and_turns(board, &color.invert());
+        let min_turns = our_turns.min(their_turns);
+        if our_turns > 0.into() {
+            our_score = our_score * min_turns / our_turns;
+        }
+        if their_turns > 0.into() {
+            their_score = their_score * min_turns / their_turns;
+        }
+        our_score - their_score
+    }
+}
+impl SymmetricalHeuristic<Rational32> for GeniusHeuristic {
+    fn min() -> Rational32 {
+        Rational32::from(i32::MIN + 1)
+    }
+    fn max() -> Rational32 {
+        Rational32::from(i32::MAX)
+    }
+
+    fn inv(t: Rational32) -> Rational32 {
+        if t == 0.into() {
+            t
+        } else {
+            Rational32::inv(t)
+        }
     }
 }
 
 impl GeniusHeuristic {
-    pub fn player(depth: usize) -> HeuristicPlayer<GeniusHeuristic, Rational32> {
-        HeuristicPlayer::new(GeniusHeuristic(), depth)
-    }
     fn estimate_score_and_turns(board: &Board, color: &Color) -> (Rational32, Rational32) {
         // Vec of all pieces of the color that can be boomed by the enemy
         let boomables: Vec<Piece> = board

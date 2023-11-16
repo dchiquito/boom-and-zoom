@@ -1,5 +1,5 @@
 use baz_core::{Board, Game, GamePlayer, Move};
-use baz_players::{GeniusHeuristic, HeuristicPlayer};
+use baz_players::{GeniusHeuristic, MinMaxPlayer};
 use godot::engine::{Node, NodeVirtual};
 use godot::prelude::*;
 use num::Rational32;
@@ -18,39 +18,14 @@ struct GodotGameBoard {
     // tx: Sender<Move>,
     // sync_barrier: Arc<Barrier>,
     // game: Arc<Mutex<Game<GodotGamePlayer, HeuristicPlayer<GoFasterHeuristic, i8>>>>,
-    game: Game<GodotGamePlayer, HeuristicPlayer<GeniusHeuristic, Rational32>>,
+    game: Game<GodotGamePlayer, MinMaxPlayer<GeniusHeuristic, Rational32>>,
 }
 
 #[godot_api]
 impl NodeVirtual for GodotGameBoard {
     fn init(base: Base<Node>) -> Self {
-        // let (tx, rx) = channel();
-        // let sync_barrier = Arc::new(Barrier::new(2));
-        // let game = Arc::new(Mutex::new(Game::new(
-        //     GodotGamePlayer::new(rx),
-        //     GoFasterHeuristic::player(1),
-        // )));
-        let game = Game::new(GodotGamePlayer {}, GeniusHeuristic::player(1));
-        // let game_clone = game.clone();
-        // let sync_barrier_clone = sync_barrier.clone();
-        // std::thread::spawn(move || {
-        //     // Wait for the initial update to finish
-        //     sync_barrier_clone.wait();
-        //     loop {
-        //         // lock the game until human player plays
-        //         game_clone.lock().unwrap().play_turn();
-        //         // wait until Godot has updated everything and calls resume
-        //         sync_barrier_clone.wait();
-        //         // Play the AI move
-        //         game_clone.lock().unwrap().play_turn();
-        //     }
-        // });
-        Self {
-            _base: base,
-            // tx,
-            game,
-            // sync_barrier,
-        }
+        let game = Game::new(GodotGamePlayer {}, MinMaxPlayer::new(GeniusHeuristic(), 2));
+        Self { _base: base, game }
     }
 }
 
@@ -197,7 +172,7 @@ struct GodotGamePlayer {
 // }
 
 impl GamePlayer for GodotGamePlayer {
-    fn decide(&mut self, board: &Board, color: &baz_core::Color) -> Move {
+    fn decide(&mut self, _board: &Board, _color: &baz_core::Color) -> Move {
         panic!("Not allowed")
         // self.rx.recv().unwrap()
     }

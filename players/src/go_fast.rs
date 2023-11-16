@@ -24,11 +24,12 @@ impl Heuristic<i8> for GoFastHeuristic {
             .map(|(height, distance)| (distance + height - 1) / height)
             .sum::<i8>()
     }
+    fn log_estimate(&self, _board: &baz_core::Board, _color: &Color) {}
 }
 
 impl GoFastHeuristic {
-    pub fn player(depth: usize) -> HeuristicPlayer<GoFastHeuristic, i8> {
-        HeuristicPlayer::new(GoFastHeuristic(), depth)
+    pub fn player() -> HeuristicPlayer<GoFastHeuristic, i8> {
+        HeuristicPlayer::new(GoFastHeuristic())
     }
 }
 
@@ -44,9 +45,10 @@ impl Heuristic<i8> for GoFasterHeuristic {
         // println!("{} - {} = {}", a, b, a - b);
         heuristic.evaluate(board, color) - heuristic.evaluate(board, &color.invert())
     }
+    fn log_estimate(&self, _board: &baz_core::Board, _color: &Color) {}
 }
 impl GoFasterHeuristic {
-    pub fn player(depth: usize) -> HeuristicPlayer<GoFasterHeuristic, i8> {
-        HeuristicPlayer::new(GoFasterHeuristic(), depth)
+    pub fn player() -> HeuristicPlayer<GoFasterHeuristic, i8> {
+        HeuristicPlayer::new(GoFasterHeuristic())
     }
 }

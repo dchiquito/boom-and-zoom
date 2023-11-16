@@ -1,5 +1,8 @@
 use baz_core::{Board, Color, Game, GamePlayer, Height, Move, Position};
-use baz_players::{ForwardRandomPlayer, GoFastHeuristic, GoFasterHeuristic, RandomPlayer};
+use baz_players::{
+    ForwardRandomPlayer, GeniusHeuristic, GoFastHeuristic, GoFasterHeuristic, MinMaxPlayer,
+    RandomPlayer,
+};
 
 struct StdinHumanPlayer();
 
@@ -121,7 +124,7 @@ fn main() -> std::io::Result<()> {
     let mut draws = 0;
     for _ in 0..1000 {
         // let mut game = Game::new(GoFastHeuristic::player(0), GoFasterHeuristic::player());
-        let mut game = Game::new(StdinHumanPlayer(), GoFasterHeuristic::player(1));
+        let mut game = Game::new(StdinHumanPlayer(), MinMaxPlayer::new(GeniusHeuristic(), 2));
         match game.finish_game() {
             baz_core::Winner::White => whites += 1,
             baz_core::Winner::Black => blacks += 1,
