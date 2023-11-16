@@ -1,10 +1,8 @@
-use std::sync::mpsc::{channel, Receiver, Sender};
-use std::sync::{Arc, Barrier, Mutex};
-
 use baz_core::{Board, Game, GamePlayer, Move};
-use baz_players::{GoFasterHeuristic, HeuristicPlayer};
+use baz_players::{GeniusHeuristic, HeuristicPlayer};
 use godot::engine::{Node, NodeVirtual};
 use godot::prelude::*;
+use num::Rational32;
 
 struct MyExtension;
 
@@ -20,7 +18,7 @@ struct GodotGameBoard {
     // tx: Sender<Move>,
     // sync_barrier: Arc<Barrier>,
     // game: Arc<Mutex<Game<GodotGamePlayer, HeuristicPlayer<GoFasterHeuristic, i8>>>>,
-    game: Game<GodotGamePlayer, HeuristicPlayer<GoFasterHeuristic, i8>>,
+    game: Game<GodotGamePlayer, HeuristicPlayer<GeniusHeuristic, Rational32>>,
 }
 
 #[godot_api]
@@ -32,7 +30,7 @@ impl NodeVirtual for GodotGameBoard {
         //     GodotGamePlayer::new(rx),
         //     GoFasterHeuristic::player(1),
         // )));
-        let game = Game::new(GodotGamePlayer {}, GoFasterHeuristic::player(1));
+        let game = Game::new(GodotGamePlayer {}, GeniusHeuristic::player(1));
         // let game_clone = game.clone();
         // let sync_barrier_clone = sync_barrier.clone();
         // std::thread::spawn(move || {

@@ -70,7 +70,7 @@ where
     T: Clone + Debug + Ord,
 {
     fn decide(&mut self, board: &Board, color: &Color) -> Move {
-        // self.choose_move(board, color)
-        self.minimax(board, color, self.depth).0
+        self.choose_move(board, color)
+        // self.minimax(board, color, self.depth).0
     }
 }

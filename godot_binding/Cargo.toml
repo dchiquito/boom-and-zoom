@@ -12,3 +12,4 @@ crate-type = ["cdylib"]
 baz_core = { path = "../core" }
 baz_players = { path = "../players" }
 godot = { git = "https://github.com/godot-rust/gdext", branch = "master" }
+num = "0.4.1"

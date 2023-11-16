@@ -394,6 +394,6 @@ mod tests {
         let board = Board::default();
         println!("{:?}", board.pieces[0].position);
         println!("{:?}", board.legal_moves_for(&board.pieces[0]));
-        assert_eq!(4, 5);
+        // assert_eq!(4, 5);
     }
 }
