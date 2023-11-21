@@ -9,15 +9,8 @@ where
 {
     fn evaluate(&mut self, board: &Board, color: &Color) -> T;
     fn log_estimate(&self, board: &Board, color: &Color);
-}
-
-pub trait SymmetricalHeuristic<T>
-where
-    T: Clone + Ord,
-{
     fn min() -> T;
     fn max() -> T;
-    fn inv(t: T) -> T;
 }
 
 pub struct HeuristicPlayer<H, T>

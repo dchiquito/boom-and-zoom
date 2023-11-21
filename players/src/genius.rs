@@ -1,8 +1,7 @@
 use baz_core::{Board, Color, Height, Move, Piece};
-use num::traits::Inv;
 use num::{rational::Rational32, ToPrimitive};
 
-use crate::heuristic::{Heuristic, HeuristicPlayer, SymmetricalHeuristic};
+use crate::heuristic::Heuristic;
 /**
  * Let's put down some thoughts about how this genius heuristic will work.
  *
@@ -137,21 +136,11 @@ impl Heuristic<Rational32> for GeniusHeuristic {
         }
         our_score - their_score
     }
-}
-impl SymmetricalHeuristic<Rational32> for GeniusHeuristic {
     fn min() -> Rational32 {
         Rational32::from(i32::MIN + 1)
     }
     fn max() -> Rational32 {
         Rational32::from(i32::MAX)
-    }
-
-    fn inv(t: Rational32) -> Rational32 {
-        if t == 0.into() {
-            t
-        } else {
-            Rational32::inv(t)
-        }
     }
 }
 
@@ -190,13 +179,16 @@ impl GeniusHeuristic {
             })
             .collect();
         let scenarios = (1 << piece_data.len()) as usize;
-        // TODO find an effective way to trim out scenarios where a 1 piece is boomed to
-        // our benefit
-        let (sum_score, sum_turns) = (0..scenarios)
+        let baseline = GeniusHeuristic::score_and_turns(0, &piece_data);
+        let (sum_score, sum_turns) = (1..scenarios)
             .map(|mask| GeniusHeuristic::score_and_turns(mask, &piece_data))
-            .fold((0, 0), |(sum_score, sum_turns), (score, turns)| {
-                (sum_score + score as i32, sum_turns + turns as i32)
-            });
+            .map(|(s, t)| if s > baseline.0 { baseline } else { (s, t) })
+            .fold(
+                (baseline.0 as i32, baseline.1 as i32),
+                |(sum_score, sum_turns), (score, turns)| {
+                    (sum_score + score as i32, sum_turns + turns as i32)
+                },
+            );
         let average_score = Rational32::new_raw(sum_score, scenarios as i32);
         let average_turns = Rational32::new_raw(sum_turns, scenarios as i32);
         if color == &Color::White {
