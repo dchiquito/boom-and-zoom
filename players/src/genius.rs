@@ -1,4 +1,4 @@
-use baz_core::{Board, Color, Height, Move, Piece};
+use baz_core::{Board, Color, Height, Move, Piece, Winner};
 use num::{rational::Rational32, ToPrimitive};
 
 use crate::heuristic::Heuristic;
@@ -102,37 +102,130 @@ use crate::heuristic::Heuristic;
 // Try to end the game as soon as possible
 pub struct GeniusHeuristic();
 
+const LOGIT: bool = true;
 impl Heuristic<Rational32> for GeniusHeuristic {
-    fn log_estimate(&self, board: &baz_core::Board, color: &baz_core::Color) {
-        let (mut our_score, our_turns) = GeniusHeuristic::estimate_score_and_turns(board, color);
-        let (mut their_score, their_turns) =
-            GeniusHeuristic::estimate_score_and_turns(board, &color.invert());
-        let min_turns = our_turns.min(their_turns);
-        if our_turns > 0.into() {
-            our_score = our_score * min_turns / our_turns;
-        }
-        if their_turns > 0.into() {
-            their_score = their_score * min_turns / their_turns;
-        }
-        let estimate = our_score - their_score;
-        println!(
-            "AI estimated score: {}\nOpponent score: {}\nTurns remaining: {}\nAI is winning by: {}\n",
-            our_score.to_f64().unwrap(),
-            their_score.to_f64().unwrap(),
-            min_turns.to_f64().unwrap(),
-            estimate.to_f64().unwrap(),
-        );
-    }
+    // fn lllllog_estimate(&self, board: &baz_core::Board, color: &baz_core::Color) {
+    //     if let Some(final_score) = match board.winner() {
+    //         Some(Winner::White) => Some(Self::max()),
+    //         Some(Winner::Black) => Some(Self::min()),
+    //         Some(Winner::Draw) => Some(Self::min()), // Draws are unnacceptable
+    //         None => None,
+    //     } {
+    //         println!("Game's over lmao, score for {color:?} is {final_score}");
+    //         return;
+    //     }
+    //     let (mut our_score, our_turns) = GeniusHeuristic::estimate_score_and_turns(board, color);
+    //     let (mut their_score, their_turns) =
+    //         GeniusHeuristic::estimate_score_and_turns(board, &color.invert());
+    //     let min_turns = our_turns.min(their_turns);
+    //     println!(
+    //         "{color:?} estimated score: {}\n{:?} score: {}\nTurns remaining: {}\nOur turns: {}\nTheir turns: {}",
+    //         our_score.to_f64().unwrap(),
+    //         color.invert(),
+    //         their_score.to_f64().unwrap(),
+    //         min_turns.to_f64().unwrap(),
+    //         our_turns.to_f64().unwrap(),
+    //         their_turns.to_f64().unwrap(),
+    //     );
+    //     if our_turns > 0.into() {
+    //         our_score = our_score * min_turns / our_turns;
+    //     }
+    //     if their_turns > 0.into() {
+    //         their_score = their_score * min_turns / their_turns;
+    //     }
+    //     if color == &Color::White {
+    //         our_score += board.white_score as i32;
+    //         their_score += board.black_score as i32;
+    //     } else {
+    //         our_score += board.black_score as i32;
+    //         their_score += board.white_score as i32;
+    //     }
+    //     let estimate = our_score - their_score;
+    //     println!(
+    //         "{color:?} estimated score: {}\n{:?} score: {}\nTurns remaining: {}\nWinning by: {}\n",
+    //         our_score.to_f64().unwrap(),
+    //         color.invert(),
+    //         their_score.to_f64().unwrap(),
+    //         min_turns.to_f64().unwrap(),
+    //         estimate.to_f64().unwrap(),
+    //     );
+    // }
     fn evaluate(&mut self, board: &baz_core::Board, color: &baz_core::Color) -> Rational32 {
+        if let Some(final_score) = match board.winner() {
+            Some(Winner::White) => {
+                if color == &Color::White {
+                    Some(Self::max())
+                } else {
+                    Some(Self::min())
+                }
+            }
+            Some(Winner::Black) => {
+                if color == &Color::White {
+                    Some(Self::min())
+                } else {
+                    Some(Self::max())
+                }
+            }
+            Some(Winner::Draw) => Some(0.into()), // Draws are unnacceptable
+            None => None,
+        } {
+            if LOGIT {
+                println!(
+                    "The game is over, the score is {}",
+                    final_score.to_f64().unwrap()
+                );
+            }
+            return final_score;
+        }
         let (mut our_score, our_turns) = GeniusHeuristic::estimate_score_and_turns(board, color);
+        if LOGIT {
+            println!(
+                "{color:?} score:{} turns:{}",
+                our_score.to_f64().unwrap(),
+                our_turns.to_f64().unwrap()
+            );
+        }
         let (mut their_score, their_turns) =
             GeniusHeuristic::estimate_score_and_turns(board, &color.invert());
+        if LOGIT {
+            println!(
+                "{:?} score:{} turns:{}",
+                color.invert(),
+                their_score.to_f64().unwrap(),
+                their_turns.to_f64().unwrap()
+            );
+        }
         let min_turns = our_turns.min(their_turns);
         if our_turns > 0.into() {
             our_score = our_score * min_turns / our_turns;
         }
         if their_turns > 0.into() {
             their_score = their_score * min_turns / their_turns;
+        }
+        if LOGIT {
+            println!(
+                "scaled, {:?}:{} {:?}:{}",
+                color,
+                our_score.to_f64().unwrap(),
+                color.invert(),
+                their_score.to_f64().unwrap(),
+            )
+        }
+        if color == &Color::White {
+            our_score += board.white_score as i32;
+            their_score += board.black_score as i32;
+        } else {
+            our_score += board.black_score as i32;
+            their_score += board.white_score as i32;
+        }
+        if LOGIT {
+            println!(
+                "Incl. points, {:?}:{} {:?}:{}",
+                color,
+                our_score.to_f64().unwrap(),
+                color.invert(),
+                their_score.to_f64().unwrap(),
+            )
         }
         our_score - their_score
     }
@@ -170,9 +263,9 @@ impl GeniusHeuristic {
                 (
                     Into::<i8>::into(&p.height),
                     if color == &Color::White {
-                        7 - p.position.y()
+                        8 - p.position.y()
                     } else {
-                        p.position.y()
+                        1 + p.position.y()
                     },
                     boomable,
                 )
@@ -191,11 +284,7 @@ impl GeniusHeuristic {
             );
         let average_score = Rational32::new_raw(sum_score, scenarios as i32);
         let average_turns = Rational32::new_raw(sum_turns, scenarios as i32);
-        if color == &Color::White {
-            (average_score + board.white_score as i32, average_turns)
-        } else {
-            (average_score + board.black_score as i32, average_turns)
-        }
+        (average_score, average_turns)
     }
     fn score_and_turns(mask: usize, data: &[(i8, i8, bool)]) -> (i8, i8) {
         data.iter()

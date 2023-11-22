@@ -8,7 +8,6 @@ where
     T: Clone + Ord,
 {
     fn evaluate(&mut self, board: &Board, color: &Color) -> T;
-    fn log_estimate(&self, board: &Board, color: &Color);
     fn min() -> T;
     fn max() -> T;
 }

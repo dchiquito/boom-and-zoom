@@ -1,8 +1,5 @@
 use baz_core::{Board, Color, Game, GamePlayer, Height, Move, Position};
-use baz_players::{
-    ForwardRandomPlayer, GeniusHeuristic, GoFastHeuristic, GoFasterHeuristic, MinMaxPlayer,
-    RandomPlayer,
-};
+use baz_players::{GeniusHeuristic, MinMaxPlayer, RandomPlayer};
 
 struct StdinHumanPlayer();
 

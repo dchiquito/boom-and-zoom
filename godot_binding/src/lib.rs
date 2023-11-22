@@ -24,7 +24,7 @@ struct GodotGameBoard {
 #[godot_api]
 impl NodeVirtual for GodotGameBoard {
     fn init(base: Base<Node>) -> Self {
-        let game = Game::new(GodotGamePlayer {}, MinMaxPlayer::new(GeniusHeuristic(), 3));
+        let game = Game::new(GodotGamePlayer {}, MinMaxPlayer::new(GeniusHeuristic(), 1));
         Self { _base: base, game }
     }
 }

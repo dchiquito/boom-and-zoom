@@ -24,7 +24,6 @@ impl Heuristic<i8> for GoFastHeuristic {
             .map(|(height, distance)| (distance + height - 1) / height)
             .sum::<i8>()
     }
-    fn log_estimate(&self, _board: &baz_core::Board, _color: &Color) {}
 
     fn min() -> i8 {
         i8::MIN
@@ -52,7 +51,6 @@ impl Heuristic<i8> for GoFasterHeuristic {
         // println!("{} - {} = {}", a, b, a - b);
         heuristic.evaluate(board, color) - heuristic.evaluate(board, &color.invert())
     }
-    fn log_estimate(&self, _board: &baz_core::Board, _color: &Color) {}
     fn min() -> i8 {
         i8::MIN
     }

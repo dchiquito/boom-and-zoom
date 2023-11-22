@@ -92,7 +92,6 @@ where
     T: Clone + Debug + Inv<Output = T> + Ord,
 {
     fn decide(&mut self, board: &Board, color: &Color) -> Move {
-        self.heuristic.log_estimate(board, color);
         // let start = Instant::now();
         // let min_wait = Duration::from_secs(1);
         // let mut mov = board.legal_moves(color)[0];
