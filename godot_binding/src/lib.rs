@@ -1,5 +1,5 @@
 use baz_core::{Board, Game, GamePlayer, Move};
-use baz_players::{GeniusHeuristic, MinMaxPlayer};
+use baz_players::{GeniusHeuristic, GoFasterHeuristic, MinMaxPlayer};
 use godot::engine::{Node, NodeVirtual};
 use godot::prelude::*;
 use num::Rational32;
@@ -17,14 +17,18 @@ struct GodotGameBoard {
 
     // tx: Sender<Move>,
     // sync_barrier: Arc<Barrier>,
-    // game: Arc<Mutex<Game<GodotGamePlayer, HeuristicPlayer<GoFasterHeuristic, i8>>>>,
-    game: Game<GodotGamePlayer, MinMaxPlayer<GeniusHeuristic, Rational32>>,
+    game: Game<GodotGamePlayer, MinMaxPlayer<GoFasterHeuristic, i8>>,
+    // game: Game<GodotGamePlayer, MinMaxPlayer<GeniusHeuristic, Rational32>>,
 }
 
 #[godot_api]
 impl NodeVirtual for GodotGameBoard {
     fn init(base: Base<Node>) -> Self {
-        let game = Game::new(GodotGamePlayer {}, MinMaxPlayer::new(GeniusHeuristic(), 2));
+        let game = Game::new(
+            GodotGamePlayer {},
+            MinMaxPlayer::new(GoFasterHeuristic(), 2),
+        );
+        // let game = Game::new(GodotGamePlayer {}, MinMaxPlayer::new(GeniusHeuristic(), 2));
         Self { _base: base, game }
     }
 }

@@ -8,7 +8,7 @@ use num::traits::Inv;
 pub struct MinMaxPlayer<H, T>
 where
     H: Heuristic<T>,
-    T: Clone + Debug + Inv<Output = T> + Ord,
+    T: Clone + Debug + Ord,
 {
     heuristic: H,
     depth: usize,
@@ -17,7 +17,7 @@ where
 impl<H, T> MinMaxPlayer<H, T>
 where
     H: Heuristic<T>,
-    T: Clone + Debug + Inv<Output = T> + Ord,
+    T: Clone + Debug + Ord,
 {
     pub fn new(heuristic: H, depth: usize) -> MinMaxPlayer<H, T> {
         MinMaxPlayer {
@@ -87,7 +87,7 @@ where
 impl<H, T> GamePlayer for MinMaxPlayer<H, T>
 where
     H: Heuristic<T>,
-    T: Clone + Debug + Inv<Output = T> + Ord,
+    T: Clone + Debug + Ord,
 {
     fn decide(&mut self, board: &Board, color: &Color) -> Move {
         // let start = Instant::now();
