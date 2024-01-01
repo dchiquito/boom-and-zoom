@@ -9,3 +9,10 @@ edition = "2021"
 baz_core = { path = "../core" }
 num = "0.4.1"
 rand = "0.8.5"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "my_benchmark"
+harness = false
