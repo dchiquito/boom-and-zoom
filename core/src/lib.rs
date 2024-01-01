@@ -177,6 +177,12 @@ impl Piece {
     pub fn boom(&mut self) {
         self.height = self.height.boom()
     }
+    pub fn can_boom(&self, other: &Piece) -> bool {
+        let dx = other.position.x - self.position.x;
+        let dy = other.position.y - self.position.y;
+        let height = i8::from(&self.height);
+        (dx <= height && (dy == 0 || dy == dx)) || (dy <= height && dx == 0)
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -247,6 +253,16 @@ impl Board {
             .get_piece_at(&piece.position)
             .expect("piece needs to be on the board");
         LegalMoveIterator::for_piece(self, piece_index)
+    }
+    pub fn boomable(&self, piece_index: usize) -> bool {
+        assert!(piece_index < 8);
+        let piece = &self.pieces[piece_index];
+        // White
+        if piece_index < 4 {
+            self.pieces[4..].iter().any(|other| other.can_boom(piece))
+        } else {
+            self.pieces[..4].iter().any(|other| other.can_boom(piece))
+        }
     }
     pub fn winner(&self) -> Option<Winner> {
         let has_white_pieces = self

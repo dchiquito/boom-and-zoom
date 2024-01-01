@@ -239,26 +239,16 @@ impl Heuristic<Rational32> for GeniusHeuristic {
 
 impl GeniusHeuristic {
     fn estimate_score_and_turns(board: &Board, color: &Color) -> (Rational32, Rational32) {
-        // Vec of all pieces of the color that can be boomed by the enemy
-        let boomables: Vec<Piece> = board
-            // Check all the legal moves for the opponent
-            .legal_moves(&color.invert())
-            // Filter out only the booms, map to the target of the boom
-            .filter_map(|m| match m {
-                Move::Boom(index) => Some(index),
-                _ => None,
-            })
-            // Map to the piece being boomed
-            .map(|index| board.get_piece(index))
-            .cloned()
-            .collect();
+        let range = match color {
+            Color::White => 0..4,
+            Color::Black => 4..8,
+        };
         // height of the piece, distance to the score zone, if the piece can be boomed
-        let piece_data: Vec<(i8, i8, bool)> = board
-            .pieces
-            .iter()
-            .filter(|p| &p.color == color && p.height != Height::Dead)
-            .map(|p| (p, boomables.iter().any(|p2| p.position == p2.position)))
-            .map(|(p, boomable)| {
+        let piece_data: Vec<(i8, i8, bool)> = range
+            .clone()
+            .zip(board.pieces[range].iter())
+            .filter(|(_i, p)| p.height != Height::Dead)
+            .map(|(i, p)| {
                 (
                     Into::<i8>::into(&p.height),
                     if color == &Color::White {
@@ -266,7 +256,7 @@ impl GeniusHeuristic {
                     } else {
                         1 + p.position.y()
                     },
-                    boomable,
+                    board.boomable(i),
                 )
             })
             .collect();
