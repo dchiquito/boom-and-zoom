@@ -16,9 +16,8 @@ impl GamePlayer for ForwardRandomPlayer {
             .filter(|p| &p.color == color)
             .choose(&mut rng)
             .unwrap();
-        let moves = board.legal_moves_for(piece);
-        moves
-            .iter()
+        board
+            .legal_moves_for(piece)
             .filter(|m| match m {
                 Move::Zoom(_, position) => match color {
                     Color::White => position.y() > piece.position.y(),
@@ -28,7 +27,6 @@ impl GamePlayer for ForwardRandomPlayer {
                 Move::Boom(_) => false,
             })
             .choose(&mut rng)
-            .copied()
             .unwrap_or_else(|| RandomPlayer().decide(board, color))
     }
 }

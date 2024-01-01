@@ -27,9 +27,8 @@ where
         }
     }
     fn choose_move(&mut self, board: &Board, color: &Color) -> Move {
-        *board
+        board
             .legal_moves(color)
-            .iter()
             .max_by_key(|m| self.heuristic.evaluate(&board.apply_move(m), color))
             // TODO why this throw error
             .unwrap()
@@ -49,8 +48,7 @@ where
         // println!("{color:?} max:{maximizing} depth:{depth} alpha:{alpha:?} beta:{beta:?}",);
         let mut scores_and_boards = board
             .legal_moves(color)
-            .iter()
-            .map(|m| board.apply_move(m))
+            .map(|m| board.apply_move(&m))
             .map(|b| (self.heuristic.evaluate(&b, color), b))
             .collect::<Vec<(T, Board)>>();
         scores_and_boards
@@ -97,9 +95,8 @@ where
         // let mut mov = board.legal_moves(color)[0];
         // let mut depth = 1;
         // while start.elapsed() < min_wait {
-        *board
+        board
             .legal_moves(color)
-            .iter()
             .max_by_key(|m| {
                 self.minimax(
                     &board.apply_move(m),

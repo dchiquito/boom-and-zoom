@@ -102,7 +102,7 @@ use crate::heuristic::Heuristic;
 // Try to end the game as soon as possible
 pub struct GeniusHeuristic();
 
-const LOGIT: bool = true;
+const LOGIT: bool = false;
 impl Heuristic<Rational32> for GeniusHeuristic {
     // fn lllllog_estimate(&self, board: &baz_core::Board, color: &baz_core::Color) {
     //     if let Some(final_score) = match board.winner() {
@@ -243,10 +243,9 @@ impl GeniusHeuristic {
         let boomables: Vec<Piece> = board
             // Check all the legal moves for the opponent
             .legal_moves(&color.invert())
-            .iter()
             // Filter out only the booms, map to the target of the boom
             .filter_map(|m| match m {
-                &Move::Boom(index) => Some(index),
+                Move::Boom(index) => Some(index),
                 _ => None,
             })
             // Map to the piece being boomed

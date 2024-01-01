@@ -47,9 +47,9 @@ fn main() {
         print_board(game.board());
         println!();
         GeniusHeuristic().evaluate(game.board(), &Color::Black);
-        let stdin = std::io::stdin();
-        let mut buffer = String::new();
-        let _ = stdin.read_line(&mut buffer).unwrap();
+        // let stdin = std::io::stdin();
+        // let mut buffer = String::new();
+        // let _ = stdin.read_line(&mut buffer).unwrap();
     }
 }
 

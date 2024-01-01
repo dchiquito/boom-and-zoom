@@ -33,9 +33,8 @@ where
         }
     }
     fn choose_move(&mut self, board: &Board, color: &Color) -> Move {
-        *board
+        board
             .legal_moves(color)
-            .iter()
             .max_by_key(|m| self.heuristic.evaluate(&board.apply_move(m), color))
             // TODO why this throw error
             .unwrap()

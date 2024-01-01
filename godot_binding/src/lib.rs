@@ -24,7 +24,7 @@ struct GodotGameBoard {
 #[godot_api]
 impl NodeVirtual for GodotGameBoard {
     fn init(base: Base<Node>) -> Self {
-        let game = Game::new(GodotGamePlayer {}, MinMaxPlayer::new(GeniusHeuristic(), 1));
+        let game = Game::new(GodotGamePlayer {}, MinMaxPlayer::new(GeniusHeuristic(), 2));
         Self { _base: base, game }
     }
 }
@@ -96,10 +96,9 @@ impl GodotGameBoard {
         self.game
             .board()
             .legal_moves_for(self.game.board().get_piece(index as usize))
-            .iter()
             .map(|m| match m {
                 Move::Boom(i) => {
-                    let pos = self.game.board().get_piece(*i).position;
+                    let pos = self.game.board().get_piece(i).position;
                     Vector2 {
                         x: pos.x() as f32,
                         y: pos.y() as f32,
@@ -133,13 +132,7 @@ impl GodotGameBoard {
         } else {
             Move::Zoom(index as usize, position)
         };
-        if self
-            .game
-            .board()
-            .legal_moves_for(piece)
-            .iter()
-            .any(|m| *m == mov)
-        {
+        if self.game.board().legal_moves_for(piece).any(|m| m == mov) {
             self.game.apply_move(&mov);
             self.game.play_turn();
         }
@@ -152,8 +145,7 @@ impl GodotGameBoard {
             .game
             .board()
             .legal_moves_for(self.game.board().get_piece(index as usize))
-            .iter()
-            .any(|m| *m == mov)
+            .any(|m| m == mov)
         {
             self.game.apply_move(&mov);
             self.game.play_turn();

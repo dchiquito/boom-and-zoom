@@ -13,7 +13,6 @@ impl GamePlayer for RandomPlayer {
             .filter(|p| &p.color == color)
             .choose(&mut rng)
             .unwrap();
-        let moves = board.legal_moves_for(piece);
-        *moves.choose(&mut rng).unwrap()
+        board.legal_moves_for(piece).choose(&mut rng).unwrap()
     }
 }

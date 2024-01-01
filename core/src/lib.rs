@@ -239,76 +239,14 @@ impl Board {
             self.pieces[i].height != Height::Dead && self.pieces[i].position.index == position.index
         })
     }
-    pub fn legal_moves(&self, color: &Color) -> Vec<Move> {
-        self.pieces
-            .iter()
-            .filter(|p| &p.color == color)
-            .flat_map(|p| self.legal_moves_for(p))
-            .collect()
+    pub fn legal_moves(&self, color: &Color) -> LegalMoveIterator {
+        LegalMoveIterator::for_color(self, color)
     }
-    pub fn legal_moves_for(&self, piece: &Piece) -> Vec<Move> {
-        if piece.height == Height::Dead {
-            return vec![];
-        }
+    pub fn legal_moves_for(&self, piece: &Piece) -> LegalMoveIterator {
         let piece_index = self
             .get_piece_at(&piece.position)
             .expect("piece needs to be on the board");
-        let directions = [
-            (-1, 0),
-            (-1, -1),
-            (0, -1),
-            (1, -1),
-            (1, 0),
-            (1, 1),
-            (0, 1),
-            (-1, 1),
-        ];
-        let mut moves = vec![];
-        let mut has_scored = false;
-        // Attempt movement in every direction
-        for (dx, dy) in directions {
-            // Set our initial range and position
-            let mut position = piece.position.clone().offset(dx, dy);
-            let mut range = piece.height.clone();
-            while range != Height::Dead {
-                // This optional ensures we don't move off the edge
-                // if let Some(pos) = &position {
-                match &position {
-                    PositionOffset::Valid(pos) => {
-                        // Check if we have encountered another piece
-                        if let Some(piece_at_pos_index) = self.get_piece_at(pos) {
-                            // If the piece is an enemy, we can boom it
-                            if self.pieces[piece_at_pos_index].color != piece.color {
-                                moves.push(Move::Boom(piece_at_pos_index));
-                            }
-                            // No jumping over pieces, so we are done with this direction
-                            break;
-                        } else {
-                            // Empty square, we can move there
-                            moves.push(Move::Zoom(piece_index, pos.clone()));
-                            // Increment our position and decrement our range
-                            position = pos.offset(dx, dy);
-                            range = range.boom();
-                        }
-                    }
-                    PositionOffset::ScoreZone(color) => {
-                        if !has_scored && color == &piece.color {
-                            moves.push(Move::Score(piece_index));
-                            // We only want to have scoring as an option once, even if
-                            // it's possible to score in multiple different ways
-                            has_scored = true;
-                        }
-                        // We've reached the score zone, can't move any further than that
-                        break;
-                    }
-                    PositionOffset::Invalid => {
-                        // We've walked off the side of the board, so stop
-                        break;
-                    }
-                }
-            }
-        }
-        moves
+        LegalMoveIterator::for_piece(self, piece_index)
     }
     pub fn winner(&self) -> Option<Winner> {
         let has_white_pieces = self
@@ -327,6 +265,124 @@ impl Board {
             })
         } else {
             None
+        }
+    }
+}
+
+pub struct LegalMoveIterator<'a> {
+    board: &'a Board,
+    piece_index: usize,
+    max_piece_index: usize,
+    dir_index: usize,
+    distance: i8,
+    has_scored: bool,
+}
+impl<'a> LegalMoveIterator<'a> {
+    pub fn for_piece(board: &'a Board, piece_index: usize) -> LegalMoveIterator<'a> {
+        let mut iter = LegalMoveIterator {
+            board,
+            piece_index,
+            max_piece_index: piece_index,
+            dir_index: 0,
+            distance: 0,
+            has_scored: false,
+        };
+        iter.advance();
+        iter
+    }
+    pub fn for_color(board: &'a Board, color: &Color) -> LegalMoveIterator<'a> {
+        let mut iter = match color {
+            Color::White => LegalMoveIterator {
+                board,
+                piece_index: 0,
+                max_piece_index: 3,
+                dir_index: 0,
+                distance: 0,
+                has_scored: false,
+            },
+            Color::Black => LegalMoveIterator {
+                board,
+                piece_index: 4,
+                max_piece_index: 7,
+                dir_index: 0,
+                distance: 0,
+                has_scored: false,
+            },
+        };
+        iter.advance();
+        iter
+    }
+    fn advance(&mut self) {
+        if self.piece_index < 8 {
+            let piece = &self.board.pieces[self.piece_index];
+            if self.distance == i8::from(&piece.height) {
+                self.end_of_the_line();
+            } else {
+                self.distance += 1;
+            }
+        }
+    }
+    fn end_of_the_line(&mut self) {
+        self.distance = 0;
+        self.dir_index += 1;
+        if self.dir_index >= 8 {
+            self.dir_index = 0;
+            self.piece_index += 1;
+        }
+        self.advance();
+    }
+}
+impl<'a> Iterator for LegalMoveIterator<'a> {
+    type Item = Move;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let piece_index = self.piece_index;
+        if piece_index > self.max_piece_index {
+            return None;
+        }
+        let piece = &self.board.pieces[piece_index];
+        let (dx, dy) = [
+            (-1, 0),
+            (-1, -1),
+            (0, -1),
+            (1, -1),
+            (1, 0),
+            (1, 1),
+            (0, 1),
+            (-1, 1),
+        ][self.dir_index];
+        let (dx, dy) = (dx * self.distance, dy * self.distance);
+        // Attempt movement in every direction
+        // Set our initial range and position
+        let position = piece.position.offset(dx, dy);
+        match &position {
+            PositionOffset::Valid(pos) => {
+                if let Some(piece_at_pos_index) = self.board.get_piece_at(pos) {
+                    self.end_of_the_line();
+                    if self.board.pieces[piece_at_pos_index].color != piece.color {
+                        Some(Move::Boom(piece_at_pos_index))
+                    } else {
+                        self.next()
+                    }
+                } else {
+                    self.advance();
+                    Some(Move::Zoom(piece_index, *pos))
+                }
+            }
+            PositionOffset::ScoreZone(color) => {
+                self.end_of_the_line();
+                if !self.has_scored && color == &piece.color {
+                    // We only want to have scoring as an option once, even if
+                    // it's possible to score in multiple different ways
+                    self.has_scored = true;
+                    return Some(Move::Score(piece_index));
+                }
+                self.next()
+            }
+            PositionOffset::Invalid => {
+                self.end_of_the_line();
+                self.next()
+            }
         }
     }
 }
@@ -389,11 +445,165 @@ where
 mod tests {
     use super::*;
 
+    macro_rules! zoom {
+        ($index:expr, $square:tt) => {
+            Move::Zoom($index, stringify!($square).try_into().unwrap())
+        };
+    }
+    macro_rules! boom {
+        ($index:expr) => {
+            Move::Boom($index)
+        };
+    }
+    macro_rules! score {
+        ($index:expr) => {
+            Move::Score($index)
+        };
+    }
+
     #[test]
     fn it_works() {
-        let board = Board::default();
-        println!("{:?}", board.pieces[0].position);
-        println!("{:?}", board.legal_moves_for(&board.pieces[0]));
-        // assert_eq!(4, 5);
+        let mut board = Board::default();
+        /*
+         * 8 ..bbbb..
+         * 7 ........
+         * 6 ........
+         * 5 ........
+         * 4 ........
+         * 3 ........
+         * 2 ........
+         * 1 ..Xwww..
+         *   abcdefgh
+         */
+        assert_eq!(
+            board
+                .legal_moves_for(&board.pieces[0])
+                .collect::<Vec<Move>>(),
+            vec![
+                zoom!(0, b1),
+                zoom!(0, a1),
+                zoom!(0, d2),
+                zoom!(0, e3),
+                zoom!(0, f4),
+                zoom!(0, c2),
+                zoom!(0, c3),
+                zoom!(0, c4),
+                zoom!(0, b2),
+                zoom!(0, a3),
+            ]
+        );
+        /*
+         * 8 ...bbb..
+         * 7 ..b.....
+         * 6 ..X.....
+         * 5 ...w....
+         * 4 ........
+         * 3 ........
+         * 2 ........
+         * 1 ...www..
+         *   abcdefgh
+         */
+        board.pieces[0].position = "c6".try_into().unwrap();
+        board.pieces[1].position = "d5".try_into().unwrap();
+        board.pieces[4].position = "c7".try_into().unwrap();
+        assert_eq!(
+            board
+                .legal_moves_for(&board.pieces[0])
+                .collect::<Vec<Move>>(),
+            vec![
+                // Left
+                zoom!(0, b6),
+                zoom!(0, a6),
+                // Down Left
+                zoom!(0, b5),
+                zoom!(0, a4),
+                // Down
+                zoom!(0, c5),
+                zoom!(0, c4),
+                zoom!(0, c3),
+                // Down Right is blocked
+                // Right
+                zoom!(0, d6),
+                zoom!(0, e6),
+                zoom!(0, f6),
+                // Up Right
+                zoom!(0, d7),
+                boom!(6),
+                // Up
+                boom!(4),
+                // Up Left
+                zoom!(0, b7),
+                zoom!(0, a8),
+                score!(0)
+            ]
+        );
+        board.pieces[0].boom();
+        assert_eq!(
+            board
+                .legal_moves_for(&board.pieces[0])
+                .collect::<Vec<Move>>(),
+            vec![
+                // Left
+                zoom!(0, b6),
+                zoom!(0, a6),
+                // Down Left
+                zoom!(0, b5),
+                zoom!(0, a4),
+                // Down
+                zoom!(0, c5),
+                zoom!(0, c4),
+                // Down Right is blocked
+                // Right
+                zoom!(0, d6),
+                zoom!(0, e6),
+                // Up Right
+                zoom!(0, d7),
+                boom!(6),
+                // Up
+                boom!(4),
+                // Up Left
+                zoom!(0, b7),
+                zoom!(0, a8),
+            ]
+        );
+        board.pieces[0].boom();
+        assert_eq!(
+            board
+                .legal_moves_for(&board.pieces[0])
+                .collect::<Vec<Move>>(),
+            vec![
+                // Left
+                zoom!(0, b6),
+                // Down Left
+                zoom!(0, b5),
+                // Down
+                zoom!(0, c5),
+                // Down Right is blocked
+                // Right
+                zoom!(0, d6),
+                // Up Right
+                zoom!(0, d7),
+                // Up
+                boom!(4),
+                // Up Left
+                zoom!(0, b7),
+            ]
+        );
+        board.pieces[0].height = Height::Dead;
+        board.pieces[1].height = Height::Dead;
+        board.pieces[2].height = Height::Dead;
+        board.pieces[3].height = Height::Dead;
+        board.pieces[4].height = Height::Dead;
+        board.pieces[5].height = Height::Dead;
+        board.pieces[6].height = Height::Dead;
+        board.pieces[7].height = Height::Dead;
+        assert_eq!(
+            board.legal_moves(&Color::White).collect::<Vec<Move>>(),
+            vec![]
+        );
+        assert_eq!(
+            board.legal_moves(&Color::Black).collect::<Vec<Move>>(),
+            vec![]
+        );
     }
 }

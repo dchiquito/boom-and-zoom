@@ -52,8 +52,7 @@ impl GamePlayer for StdinHumanPlayer {
             };
             if board
                 .legal_moves_for(&board.pieces[first_piece_index])
-                .iter()
-                .any(|m| m == &mov)
+                .any(|m| m == mov)
             {
                 return mov;
             } else {
