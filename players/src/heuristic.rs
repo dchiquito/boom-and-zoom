@@ -1,7 +1,56 @@
+use std::cmp::Ordering;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
 use baz_core::*;
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum HResult<T>
+where
+    T: Ord + Default,
+{
+    Win,
+    Draw,
+    Loss,
+    Unknown(T),
+}
+impl<T> Ord for HResult<T>
+where
+    T: Ord + Default,
+{
+    fn cmp(&self, other: &Self) -> Ordering {
+        match self {
+            HResult::Win => match other {
+                HResult::Win => Ordering::Equal,
+                _ => Ordering::Greater,
+            },
+            HResult::Draw => match other {
+                HResult::Win => Ordering::Less,
+                HResult::Draw => Ordering::Equal,
+                HResult::Loss => Ordering::Greater,
+                HResult::Unknown(ev) => T::default().cmp(ev),
+            },
+            HResult::Loss => match other {
+                HResult::Loss => Ordering::Equal,
+                _ => Ordering::Less,
+            },
+            HResult::Unknown(ev) => match other {
+                HResult::Win => Ordering::Less,
+                HResult::Draw => ev.cmp(&T::default()),
+                HResult::Loss => Ordering::Greater,
+                HResult::Unknown(other_ev) => ev.cmp(other_ev),
+            },
+        }
+    }
+}
+impl<T> PartialOrd for HResult<T>
+where
+    T: Ord + Default,
+{
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
 
 pub trait Heuristic<T>
 where

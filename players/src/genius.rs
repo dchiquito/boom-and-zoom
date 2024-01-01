@@ -1,7 +1,7 @@
 use baz_core::{Board, Color, Height, Move, Piece, Winner};
 use num::{rational::Rational32, ToPrimitive};
 
-use crate::heuristic::Heuristic;
+use crate::heuristic::{HResult, Heuristic};
 /**
  * Let's put down some thoughts about how this genius heuristic will work.
  *
@@ -103,7 +103,7 @@ use crate::heuristic::Heuristic;
 pub struct GeniusHeuristic();
 
 const LOGIT: bool = false;
-impl Heuristic<Rational32> for GeniusHeuristic {
+impl Heuristic<HResult<Rational32>> for GeniusHeuristic {
     // fn lllllog_estimate(&self, board: &baz_core::Board, color: &baz_core::Color) {
     //     if let Some(final_score) = match board.winner() {
     //         Some(Winner::White) => Some(Self::max()),
@@ -150,7 +150,11 @@ impl Heuristic<Rational32> for GeniusHeuristic {
     //         estimate.to_f64().unwrap(),
     //     );
     // }
-    fn evaluate(&mut self, board: &baz_core::Board, color: &baz_core::Color) -> Rational32 {
+    fn evaluate(
+        &mut self,
+        board: &baz_core::Board,
+        color: &baz_core::Color,
+    ) -> HResult<Rational32> {
         if let Some(final_score) = match board.winner() {
             Some(Winner::White) => {
                 if color == &Color::White {
@@ -166,15 +170,9 @@ impl Heuristic<Rational32> for GeniusHeuristic {
                     Some(Self::max())
                 }
             }
-            Some(Winner::Draw) => Some(0.into()), // Draws are unnacceptable
+            Some(Winner::Draw) => Some(HResult::Draw), // Draws are unnacceptable
             None => None,
         } {
-            if LOGIT {
-                println!(
-                    "The game is over, the score is {}",
-                    final_score.to_f64().unwrap()
-                );
-            }
             return final_score;
         }
         let (mut our_score, our_turns) = GeniusHeuristic::estimate_score_and_turns(board, color);
@@ -227,13 +225,13 @@ impl Heuristic<Rational32> for GeniusHeuristic {
                 their_score.to_f64().unwrap(),
             )
         }
-        our_score - their_score
+        HResult::Unknown(our_score - their_score)
     }
-    fn min() -> Rational32 {
-        Rational32::from(i32::MIN + 1)
+    fn min() -> HResult<Rational32> {
+        HResult::Loss
     }
-    fn max() -> Rational32 {
-        Rational32::from(i32::MAX)
+    fn max() -> HResult<Rational32> {
+        HResult::Win
     }
 }
 
