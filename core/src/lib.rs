@@ -265,20 +265,18 @@ impl Board {
         }
     }
     pub fn winner(&self) -> Option<Winner> {
-        let has_white_pieces = self
-            .pieces
-            .iter()
-            .any(|p| p.color == Color::White && p.height != Height::Dead);
-        let has_black_pieces = self
-            .pieces
-            .iter()
-            .any(|p| p.color == Color::Black && p.height != Height::Dead);
-        if !has_white_pieces || !has_black_pieces {
+        let white_potential: u8 = self.pieces[0..4].iter().map(|p| u8::from(&p.height)).sum();
+        let black_potential: u8 = self.pieces[4..8].iter().map(|p| u8::from(&p.height)).sum();
+        if white_potential == 0 || black_potential == 0 {
             Some(match self.white_score.cmp(&self.black_score) {
                 std::cmp::Ordering::Less => Winner::Black,
                 std::cmp::Ordering::Equal => Winner::Draw,
                 std::cmp::Ordering::Greater => Winner::White,
             })
+        } else if self.white_score + white_potential < self.black_score {
+            Some(Winner::Black)
+        } else if self.black_score + black_potential < self.white_score {
+            Some(Winner::White)
         } else {
             None
         }

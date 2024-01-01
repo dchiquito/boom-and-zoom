@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use baz_core::{Board, Color, Game, Height};
 use baz_players::{GeniusHeuristic, Heuristic, MinMaxPlayer};
 use clap::{Parser, ValueEnum};
@@ -35,10 +37,10 @@ fn main() {
     let args = Args::parse();
     println!("{args:?}");
     let player1 = match args.player1 {
-        Player::Minimax => MinMaxPlayer::new(GeniusHeuristic(), args.depth1),
+        Player::Minimax => MinMaxPlayer::new(GeniusHeuristic(), Duration::from_secs(5)),
     };
     let player2 = match args.player2 {
-        Player::Minimax => MinMaxPlayer::new(GeniusHeuristic(), args.depth2),
+        Player::Minimax => MinMaxPlayer::new(GeniusHeuristic(), Duration::from_secs(5)),
     };
     let mut game = Game::new(player1, player2);
     while game.board().winner().is_none() {
