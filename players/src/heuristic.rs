@@ -59,6 +59,7 @@ where
     fn evaluate(&mut self, board: &Board, color: &Color) -> T;
     fn min() -> T;
     fn max() -> T;
+    fn draw() -> T;
 }
 
 pub struct HeuristicPlayer<H, T>

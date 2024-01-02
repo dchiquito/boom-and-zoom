@@ -170,7 +170,7 @@ impl Heuristic<HResult<Rational32>> for GeniusHeuristic {
                     Some(Self::max())
                 }
             }
-            Some(Winner::Draw) => Some(HResult::Draw), // Draws are unnacceptable
+            Some(Winner::Draw) => Some(HResult::Draw),
             None => None,
         } {
             return final_score;
@@ -232,6 +232,9 @@ impl Heuristic<HResult<Rational32>> for GeniusHeuristic {
     }
     fn max() -> HResult<Rational32> {
         HResult::Win
+    }
+    fn draw() -> HResult<Rational32> {
+        HResult::Draw
     }
 }
 

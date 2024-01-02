@@ -19,6 +19,16 @@ pub enum Winner {
     Draw,
 }
 
+impl Winner {
+    pub fn color(&self) -> Option<Color> {
+        match self {
+            Winner::White => Some(Color::White),
+            Winner::Black => Some(Color::Black),
+            Winner::Draw => None,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Position {
     index: i8,

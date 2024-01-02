@@ -31,6 +31,9 @@ impl Heuristic<i8> for GoFastHeuristic {
     fn max() -> i8 {
         i8::MAX
     }
+    fn draw() -> i8 {
+        0
+    }
 }
 
 impl GoFastHeuristic {
@@ -56,6 +59,9 @@ impl Heuristic<i8> for GoFasterHeuristic {
     }
     fn max() -> i8 {
         i8::MAX
+    }
+    fn draw() -> i8 {
+        0
     }
 }
 impl GoFasterHeuristic {
