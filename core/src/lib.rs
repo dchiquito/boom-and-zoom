@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Color {
     White,
@@ -8,6 +10,19 @@ impl Color {
         match self {
             Color::White => Color::Black,
             Color::Black => Color::White,
+        }
+    }
+}
+impl FromStr for Color {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "white" => Ok(Color::White),
+            "w" => Ok(Color::White),
+            "black" => Ok(Color::Black),
+            "b" => Ok(Color::Black),
+            _ => Err("Not a valid color".to_string()),
         }
     }
 }

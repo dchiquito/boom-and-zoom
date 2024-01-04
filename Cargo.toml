@@ -3,6 +3,7 @@
 members = [
   "cli",
   "core",
+  "dueler",
   "godot_binding",
   "players",
   "profile",

@@ -119,7 +119,7 @@ where
         let mut best_move = (H::min(), None);
         let mut last_best_move = (H::min(), None);
         self.max_depth = 3;
-        self.max_width = 20;
+        self.max_width = 6; // TODO tune this
         while Instant::now() - now < self.time_per_turn {
             last_best_move = best_move;
             best_move = self.minimax(board, color, true, H::min(), H::max(), 0);
