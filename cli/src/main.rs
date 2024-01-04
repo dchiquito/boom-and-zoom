@@ -1,7 +1,12 @@
-use std::time::Duration;
+use std::{str::FromStr, time::Duration};
 
 use baz_core::{Board, Color, Game, GamePlayer, Height, Move, Position};
-use baz_players::{GeniusHeuristic, MinMaxPlayer, RandomPlayer};
+use baz_players::{
+    GeniusHeuristic, GoFastHeuristic, GoFasterHeuristic, HResult, HeuristicPlayer, MinMaxPlayer,
+    RandomPlayer,
+};
+use clap::{Parser, Subcommand};
+use num::Rational32;
 
 struct StdinHumanPlayer();
 
@@ -104,8 +109,92 @@ impl StdinHumanPlayer {
     }
 }
 
+struct StdinWrapper<T>
+where
+    T: GamePlayer,
+{
+    player: T,
+}
+
+#[derive(Parser, Debug)]
+#[command(author, version)]
+struct Args {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Debug, Subcommand)]
+enum Commands {
+    Play {
+        color: Color,
+        #[command(subcommand)]
+        player: PlayerOptions,
+    },
+    // Not very interesting
+    // Duel,
+    // I'm lazy, godot already exists
+    // HumanReadable,
+}
+
+#[derive(Clone, Debug, Subcommand)]
+enum PlayerOptions {
+    Random,
+    GoFast,
+    GoFaster,
+    Genius,
+}
+
+impl FromStr for PlayerOptions {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "random" => Ok(PlayerOptions::Random),
+            "go-fast" => Ok(PlayerOptions::GoFast),
+            "go-faster" => Ok(PlayerOptions::GoFaster),
+            "genius" => Ok(PlayerOptions::Genius),
+            _ => Err("unrecognized player".to_string()),
+        }
+    }
+}
+
+enum AIPlayer {
+    Random(RandomPlayer),
+    GoFast(HeuristicPlayer<GoFastHeuristic, i8>),
+    GoFaster(HeuristicPlayer<GoFasterHeuristic, i8>),
+    Genius(HeuristicPlayer<GeniusHeuristic, HResult<Rational32>>),
+}
+impl From<PlayerOptions> for AIPlayer {
+    fn from(value: PlayerOptions) -> Self {
+        match value {
+            PlayerOptions::Random => AIPlayer::Random(RandomPlayer()),
+            PlayerOptions::GoFast => AIPlayer::GoFast(HeuristicPlayer::new(GoFastHeuristic())),
+            PlayerOptions::GoFaster => {
+                AIPlayer::GoFaster(HeuristicPlayer::new(GoFasterHeuristic()))
+            }
+            PlayerOptions::Genius => AIPlayer::Genius(HeuristicPlayer::new(GeniusHeuristic())),
+        }
+    }
+}
+impl GamePlayer for AIPlayer {
+    fn decide(&mut self, board: &Board, color: &Color) -> Move {
+        match self {
+            AIPlayer::Random(player) => player.decide(board, color),
+            AIPlayer::GoFast(player) => player.decide(board, color),
+            AIPlayer::GoFaster(player) => player.decide(board, color),
+            AIPlayer::Genius(player) => player.decide(board, color),
+        }
+    }
+}
+
 fn main() -> std::io::Result<()> {
     // let mut game = Game::new(RandomPlayer(), StdinHumanPlayer());
+    let args = Args::parse();
+    match args.command {
+        Commands::Play { color, player } => {
+            let ai = AIPlayer::from(player);
+        }
+    }
     let mut game = Game::new(RandomPlayer(), RandomPlayer());
     game.finish_game();
     // while game.winner().is_none() {

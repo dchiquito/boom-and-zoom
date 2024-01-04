@@ -8,3 +8,5 @@ edition = "2021"
 [dependencies]
 baz_core = { path = "../core" }
 baz_players = { path = "../players" }
+clap = { version = "4.4.12", features = ["derive"] }
+num = "0.4.1"
