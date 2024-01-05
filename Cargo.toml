@@ -6,6 +6,5 @@ members = [
   "dueler",
   "godot_binding",
   "players",
-  "profile",
 ]
 resolver = "2"
