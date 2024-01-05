@@ -11,11 +11,23 @@ players:
     workdir: ../cli/
     build: cargo build --release
     artifact: ../target/release/baz_cli
+  - name: random-forward
+    args: ["play", "random-forward"]
+    workdir: ../cli/
+    build: cargo build --release
+    artifact: ../target/release/baz_cli
+  - name: go-fast
+    args: ["play", "go-fast"]
+    workdir: ../cli/
+    build: cargo build --release
+    artifact: ../target/release/baz_cli
   - name: genius
     args: ["play", "genius"]
     workdir: ../cli/
     build: cargo build --release
     artifact: ../target/release/baz_cli
 tournament:
-  - random
+  # - random-forward
+  # - random
+  # - go-fast
   - genius

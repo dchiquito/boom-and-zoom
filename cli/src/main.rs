@@ -1,44 +1,19 @@
 use std::{str::FromStr, time::Duration};
 
-use baz_core::{Board, Color, GamePlayer, Height, Move, Position};
+use baz_core::{Board, Color, GamePlayer, Move, Position};
 use baz_dueler::StdioGamePlayer;
 use baz_players::{
-    GeniusHeuristic, GoFastHeuristic, GoFasterHeuristic, HResult, HeuristicPlayer, MinMaxPlayer,
-    RandomPlayer,
+    ForwardRandomPlayer, GeniusHeuristic, GoFastHeuristic, GoFasterHeuristic, HResult,
+    HeuristicPlayer, MinMaxPlayer, RandomPlayer,
 };
 use clap::{Parser, Subcommand};
 use num::Rational32;
 
 struct StdinHumanPlayer();
 
-fn print_board(board: &Board) {
-    println!("White: {}  Black {}", board.white_score, board.black_score);
-    for y in (0..8).rev() {
-        print!("{}| ", y + 1);
-        for x in 0..8 {
-            if let Some(index) = board.get_piece_at(&(x, y).into()) {
-                let piece = &board.pieces[index];
-                if piece.height == Height::Dead {
-                    print!(". ");
-                } else if piece.color == Color::Black {
-                    print!("\x1b[37;40m");
-                } else {
-                    print!("\x1b[47;30m");
-                }
-                print!("{}\x1b[0m ", Into::<u8>::into(&piece.height));
-            } else {
-                print!(". ");
-            }
-        }
-        println!();
-    }
-    println!(" +-----------------");
-    println!("   a b c d e f g h");
-}
-
 impl GamePlayer for StdinHumanPlayer {
     fn decide(&mut self, board: &Board, color: &Color) -> Move {
-        print_board(board);
+        println!("{board:?}");
         println!("{:?}'s turn", color);
         loop {
             let first_piece_index = StdinHumanPlayer::pick_piece(board);
@@ -132,6 +107,7 @@ enum Commands {
 #[derive(Clone, Debug, Subcommand)]
 enum PlayerOptions {
     Random,
+    RandomForward,
     GoFast,
     GoFaster,
     Genius,
@@ -143,6 +119,7 @@ impl FromStr for PlayerOptions {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "random" => Ok(PlayerOptions::Random),
+            "random-forward" => Ok(PlayerOptions::RandomForward),
             "go-fast" => Ok(PlayerOptions::GoFast),
             "go-faster" => Ok(PlayerOptions::GoFaster),
             "genius" => Ok(PlayerOptions::Genius),
@@ -153,6 +130,7 @@ impl FromStr for PlayerOptions {
 
 enum AIPlayer {
     Random(RandomPlayer),
+    RandomForward(ForwardRandomPlayer),
     GoFast(HeuristicPlayer<GoFastHeuristic, i8>),
     GoFaster(HeuristicPlayer<GoFasterHeuristic, i8>),
     Genius(MinMaxPlayer<GeniusHeuristic, HResult<Rational32>>),
@@ -161,6 +139,7 @@ impl From<PlayerOptions> for AIPlayer {
     fn from(value: PlayerOptions) -> Self {
         match value {
             PlayerOptions::Random => AIPlayer::Random(RandomPlayer()),
+            PlayerOptions::RandomForward => AIPlayer::RandomForward(ForwardRandomPlayer()),
             PlayerOptions::GoFast => AIPlayer::GoFast(HeuristicPlayer::new(GoFastHeuristic())),
             PlayerOptions::GoFaster => {
                 AIPlayer::GoFaster(HeuristicPlayer::new(GoFasterHeuristic()))
@@ -176,6 +155,7 @@ impl GamePlayer for AIPlayer {
     fn decide(&mut self, board: &Board, color: &Color) -> Move {
         match self {
             AIPlayer::Random(player) => player.decide(board, color),
+            AIPlayer::RandomForward(player) => player.decide(board, color),
             AIPlayer::GoFast(player) => player.decide(board, color),
             AIPlayer::GoFaster(player) => player.decide(board, color),
             AIPlayer::Genius(player) => player.decide(board, color),

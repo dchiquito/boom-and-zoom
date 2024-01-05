@@ -2,8 +2,9 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::process::{ChildStdin, ChildStdout, Stdio};
+use std::time::Duration;
 
-use baz_core::{Board, Color};
+use baz_core::{Board, Color, Winner};
 use baz_dueler::deserialize_move;
 use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
@@ -153,10 +154,13 @@ fn play_match(config: &Config, white_player_name: &str, black_player_name: &str)
     let mut board = Board::default();
     let mut current_color = Color::White;
     while board.winner().is_none() {
+        println!("{board:?}");
+        std::thread::sleep(Duration::from_millis(1));
         board = match current_color {
             Color::White => play_turn(&board, &mut white_stdout, &mut black_stdin),
             Color::Black => play_turn(&board, &mut black_stdout, &mut white_stdin),
         };
+        std::thread::sleep(Duration::from_millis(1));
         current_color = current_color.invert();
     }
     println!("Winner! {:?}", board.winner());
@@ -168,13 +172,15 @@ fn play_turn(board: &Board, stdout: &mut ChildStdout, stdin: &mut ChildStdin) ->
     reader
         .read_line(&mut buffer)
         .expect("Failed to read move from player");
-    // print!("{buffer}");
     let mov = deserialize_move(&buffer);
     // TODO verify move is legal
-    stdin
-        .write_all(buffer.as_bytes())
-        .expect("Failed to send move to player");
-    board.apply_move(&mov)
+    let new_board = board.apply_move(&mov);
+    if new_board.winner().is_none() {
+        stdin
+            .write_all(buffer.as_bytes())
+            .expect("Failed to send move to player");
+    }
+    new_board
 }
 
 #[derive(Parser, Debug)]

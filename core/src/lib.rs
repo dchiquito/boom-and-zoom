@@ -222,7 +222,7 @@ pub enum Move {
     Score(usize),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Board {
     pub pieces: [Piece; 8],
     pub black_score: u8,
@@ -244,6 +244,33 @@ impl Default for Board {
             black_score: 0,
             white_score: 0,
         }
+    }
+}
+impl std::fmt::Debug for Board {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "White: {}  Black {}", self.white_score, self.black_score)?;
+        for y in (0..8).rev() {
+            write!(f, "{}| ", y + 1)?;
+            for x in 0..8 {
+                if let Some(index) = self.get_piece_at(&(x, y).into()) {
+                    let piece = &self.pieces[index];
+                    if piece.height == Height::Dead {
+                        write!(f, ". ")?;
+                    } else if piece.color == Color::Black {
+                        write!(f, "\x1b[37;40m")?;
+                    } else {
+                        write!(f, "\x1b[47;30m")?;
+                    }
+                    write!(f, "{}\x1b[0m ", Into::<u8>::into(&piece.height))?;
+                } else {
+                    write!(f, ". ")?;
+                }
+            }
+            writeln!(f)?;
+        }
+        writeln!(f, " +-----------------")?;
+        writeln!(f, "   a b c d e f g h")?;
+        Ok(())
     }
 }
 impl Board {
