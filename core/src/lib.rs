@@ -68,6 +68,11 @@ impl From<i8> for Position {
         }
     }
 }
+impl From<Position> for i8 {
+    fn from(pos: Position) -> Self {
+        pos.x + (pos.y * 8)
+    }
+}
 impl std::fmt::Debug for Position {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let columns = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];

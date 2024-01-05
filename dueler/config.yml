@@ -6,11 +6,16 @@ players:
       target: main
     build: cargo build --bin baz_cli --release
     artifact: target/release/baz_cli
-  - name: bar
-    args: []
+  - name: random
+    args: ["play", "random"]
+    workdir: ../cli/
+    build: cargo build --release
+    artifact: ../target/release/baz_cli
+  - name: genius
+    args: ["play", "genius"]
     workdir: ../cli/
     build: cargo build --release
     artifact: ../target/release/baz_cli
 tournament:
-  - foo
-  - bar
+  - random
+  - genius

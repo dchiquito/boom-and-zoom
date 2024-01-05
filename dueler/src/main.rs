@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
-use std::process::{ChildStdin, ChildStdout};
+use std::process::{ChildStdin, ChildStdout, Stdio};
 
 use baz_core::{Board, Color};
 use baz_dueler::deserialize_move;
@@ -60,6 +60,7 @@ fn update_artifact_if_necessary(player: &PlayerInfo) {
 }
 
 fn update_artifact(player: &PlayerInfo) {
+    println!("Updating {}", player.name);
     match &player.artifact_location {
         ArtifactLocation::LocalArtifact { workdir } => build_and_copy(player, workdir),
         ArtifactLocation::Git { repo, target } => update_git_artifact(player, repo, target),
@@ -122,18 +123,23 @@ fn build_and_copy(player: &PlayerInfo, build_dir: &Path) {
 }
 
 fn play_match(config: &Config, white_player_name: &str, black_player_name: &str) {
+    println!("{white_player_name} vs. {black_player_name}");
     let white_player = config.player(white_player_name);
     let black_player = config.player(black_player_name);
     update_artifact_if_necessary(white_player);
     update_artifact_if_necessary(black_player);
     let mut white_process = std::process::Command::new(white_player.artifact_path())
         .args(&white_player.args)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
         .spawn()
         .expect("Failed to start white player");
     let mut white_stdin = white_process.stdin.take().unwrap();
     let mut white_stdout = white_process.stdout.take().unwrap();
     let mut black_process = std::process::Command::new(black_player.artifact_path())
         .args(&white_player.args)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
         .spawn()
         .expect("Failed to start white player");
     let mut black_stdin = black_process.stdin.take().unwrap();
@@ -162,7 +168,7 @@ fn play_turn(board: &Board, stdout: &mut ChildStdout, stdin: &mut ChildStdin) ->
     reader
         .read_line(&mut buffer)
         .expect("Failed to read move from player");
-    println!("{buffer}");
+    // print!("{buffer}");
     let mov = deserialize_move(&buffer);
     // TODO verify move is legal
     stdin
@@ -204,5 +210,4 @@ fn main() {
             }
         }
     }
-    println!("{config:?}");
 }

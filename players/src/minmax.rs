@@ -126,7 +126,7 @@ where
             self.max_depth += 1;
         }
         let time_taken = Instant::now() - now;
-        println!(
+        eprintln!(
             "Decided after {time_taken:?}, {} iterations, and a max depth of {}: {:?}",
             self.iterations,
             self.max_depth - 2,

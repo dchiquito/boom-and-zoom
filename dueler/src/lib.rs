@@ -9,9 +9,10 @@ pub fn serialize_move(mov: &Move) -> String {
 }
 pub fn deserialize_move(line: &str) -> Move {
     if let Some(remainder) = line.strip_prefix("Boom ") {
-        Move::Boom(remainder.parse().expect("Invalid index"))
+        Move::Boom(remainder.trim_end().parse().expect("Invalid index"))
     } else if let Some(remainder) = line.strip_prefix("Zoom ") {
         let (index, pos) = remainder
+            .trim_end()
             .split_once(' ')
             .expect("Malformed zoom serialization");
         Move::Zoom(
@@ -19,7 +20,7 @@ pub fn deserialize_move(line: &str) -> Move {
             pos.parse::<i8>().expect("Invalid position").into(),
         )
     } else if let Some(remainder) = line.strip_prefix("Score ") {
-        Move::Score(remainder.parse().expect("Invalid index"))
+        Move::Score(remainder.trim_end().parse().expect("Invalid index"))
     } else {
         panic!("Unable to deserialize {line}")
     }
@@ -47,16 +48,19 @@ where
         stdin.read_line(&mut buffer)?;
         let color: Color;
         // We must make the first move if we are playing white
-        if buffer == "white" {
+        if buffer == "white\n" {
             color = Color::White;
             let our_move = self.player.decide(&board, &color);
             board = board.apply_move(&our_move);
             println!("{}", serialize_move(&our_move));
-        } else {
+        } else if buffer == "black\n" {
             color = Color::Black;
+        } else {
+            panic!("Unrecognized color statement: {buffer}")
         }
         while board.winner().is_none() {
             // Get the opponents move from stdin and apply it to the board
+            buffer = String::new();
             stdin.read_line(&mut buffer)?;
             let their_move = deserialize_move(&buffer);
             board = board.apply_move(&their_move);

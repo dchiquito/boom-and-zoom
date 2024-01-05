@@ -1,6 +1,7 @@
 use std::{str::FromStr, time::Duration};
 
-use baz_core::{Board, Color, Game, GamePlayer, Height, Move, Position};
+use baz_core::{Board, Color, GamePlayer, Height, Move, Position};
+use baz_dueler::StdioGamePlayer;
 use baz_players::{
     GeniusHeuristic, GoFastHeuristic, GoFasterHeuristic, HResult, HeuristicPlayer, MinMaxPlayer,
     RandomPlayer,
@@ -109,13 +110,6 @@ impl StdinHumanPlayer {
     }
 }
 
-struct StdinWrapper<T>
-where
-    T: GamePlayer,
-{
-    player: T,
-}
-
 #[derive(Parser, Debug)]
 #[command(author, version)]
 struct Args {
@@ -126,7 +120,6 @@ struct Args {
 #[derive(Debug, Subcommand)]
 enum Commands {
     Play {
-        color: Color,
         #[command(subcommand)]
         player: PlayerOptions,
     },
@@ -162,7 +155,7 @@ enum AIPlayer {
     Random(RandomPlayer),
     GoFast(HeuristicPlayer<GoFastHeuristic, i8>),
     GoFaster(HeuristicPlayer<GoFasterHeuristic, i8>),
-    Genius(HeuristicPlayer<GeniusHeuristic, HResult<Rational32>>),
+    Genius(MinMaxPlayer<GeniusHeuristic, HResult<Rational32>>),
 }
 impl From<PlayerOptions> for AIPlayer {
     fn from(value: PlayerOptions) -> Self {
@@ -172,7 +165,10 @@ impl From<PlayerOptions> for AIPlayer {
             PlayerOptions::GoFaster => {
                 AIPlayer::GoFaster(HeuristicPlayer::new(GoFasterHeuristic()))
             }
-            PlayerOptions::Genius => AIPlayer::Genius(HeuristicPlayer::new(GeniusHeuristic())),
+            PlayerOptions::Genius => AIPlayer::Genius(MinMaxPlayer::new(
+                GeniusHeuristic(),
+                Duration::from_millis(1000),
+            )),
         }
     }
 }
@@ -191,39 +187,41 @@ fn main() -> std::io::Result<()> {
     // let mut game = Game::new(RandomPlayer(), StdinHumanPlayer());
     let args = Args::parse();
     match args.command {
-        Commands::Play { color, player } => {
+        Commands::Play { player } => {
             let ai = AIPlayer::from(player);
+            let mut stdio_player = StdioGamePlayer::new(ai);
+            stdio_player.main()?;
         }
     }
-    let mut game = Game::new(RandomPlayer(), RandomPlayer());
-    game.finish_game();
-    // while game.winner().is_none() {
-    // game.play_turn();
-    // print_board(game.board());
-    // let stdin = std::io::stdin();
-    // let mut buffer = String::new();
-    // let _ = stdin.read_line(&mut buffer);
+    // let mut game = Game::new(RandomPlayer(), RandomPlayer());
+    // game.finish_game();
+    // // while game.winner().is_none() {
+    // // game.play_turn();
+    // // print_board(game.board());
+    // // let stdin = std::io::stdin();
+    // // let mut buffer = String::new();
+    // // let _ = stdin.read_line(&mut buffer);
+    // // }
+    // println!("Winner: {:?}", game.winner());
+    //
+    // let mut whites = 0;
+    // let mut blacks = 0;
+    // let mut draws = 0;
+    // for _ in 0..1000 {
+    //     // let mut game = Game::new(GoFastHeuristic::player(0), GoFasterHeuristic::player());
+    //     let mut game = Game::new(
+    //         StdinHumanPlayer(),
+    //         MinMaxPlayer::new(GeniusHeuristic(), Duration::from_secs(5)),
+    //     );
+    //     match game.finish_game() {
+    //         baz_core::Winner::White => whites += 1,
+    //         baz_core::Winner::Black => blacks += 1,
+    //         baz_core::Winner::Draw => draws += 1,
+    //     }
     // }
-    println!("Winner: {:?}", game.winner());
-
-    let mut whites = 0;
-    let mut blacks = 0;
-    let mut draws = 0;
-    for _ in 0..1000 {
-        // let mut game = Game::new(GoFastHeuristic::player(0), GoFasterHeuristic::player());
-        let mut game = Game::new(
-            StdinHumanPlayer(),
-            MinMaxPlayer::new(GeniusHeuristic(), Duration::from_secs(5)),
-        );
-        match game.finish_game() {
-            baz_core::Winner::White => whites += 1,
-            baz_core::Winner::Black => blacks += 1,
-            baz_core::Winner::Draw => draws += 1,
-        }
-    }
-    println!("White wins: {}", whites);
-    println!("Black wins: {}", blacks);
-    println!("Draws: {}", draws);
-
+    // println!("White wins: {}", whites);
+    // println!("Black wins: {}", blacks);
+    // println!("Draws: {}", draws);
+    //
     Ok(())
 }
