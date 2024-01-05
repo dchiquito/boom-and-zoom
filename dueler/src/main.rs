@@ -164,6 +164,8 @@ fn play_match(config: &Config, white_player_name: &str, black_player_name: &str)
         current_color = current_color.invert();
     }
     println!("Winner! {:?}", board.winner());
+    white_process.kill().expect("Failed to kill white process");
+    black_process.kill().expect("Failed to kill black process");
 }
 
 fn play_turn(board: &Board, stdout: &mut ChildStdout, stdin: &mut ChildStdin) -> Board {

@@ -146,7 +146,7 @@ impl From<PlayerOptions> for AIPlayer {
             }
             PlayerOptions::Genius => AIPlayer::Genius(MinMaxPlayer::new(
                 GeniusHeuristic(),
-                Duration::from_millis(1000),
+                Duration::from_millis(100),
             )),
         }
     }

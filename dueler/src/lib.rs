@@ -25,7 +25,7 @@ pub fn deserialize_move(line: &str) -> Move {
     } else if line == "Concede\n" {
         Move::Concede
     } else {
-        panic!("Unable to deserialize {line}")
+        panic!("Unable to deserialize \"{line}\"")
     }
 }
 
