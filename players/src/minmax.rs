@@ -132,8 +132,8 @@ where
             self.max_depth - 2,
             last_best_move
         );
-        // Intentionally discard the abortive partially calculated result
-        last_best_move.1.unwrap()
+        // Intentionally ignore the abortive partially calculated result
+        last_best_move.1.unwrap_or(Move::Concede)
     }
 }
 
