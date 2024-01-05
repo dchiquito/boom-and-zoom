@@ -138,7 +138,7 @@ fn play_match(config: &Config, white_player_name: &str, black_player_name: &str)
     let mut white_stdin = white_process.stdin.take().unwrap();
     let mut white_stdout = white_process.stdout.take().unwrap();
     let mut black_process = std::process::Command::new(black_player.artifact_path())
-        .args(&white_player.args)
+        .args(&black_player.args)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()
@@ -154,7 +154,7 @@ fn play_match(config: &Config, white_player_name: &str, black_player_name: &str)
     let mut board = Board::default();
     let mut current_color = Color::White;
     while board.winner().is_none() {
-        println!("{board:?}");
+        // println!("{board:?}");
         std::thread::sleep(Duration::from_millis(1));
         board = match current_color {
             Color::White => play_turn(&board, &mut white_stdout, &mut black_stdin),
@@ -195,7 +195,12 @@ struct Args {
 #[derive(Debug, Subcommand)]
 enum Commands {
     Update,
-    Play,
+    Play {
+        #[arg(long)]
+        update: bool,
+        #[arg(long)]
+        skip_self: bool,
+    },
 }
 
 fn main() {
@@ -210,10 +215,17 @@ fn main() {
                 update_artifact(player);
             }
         }
-        Commands::Play => {
+        Commands::Play { update, skip_self } => {
+            if update {
+                for player_name in config.tournament.iter() {
+                    update_artifact(config.player(player_name));
+                }
+            }
             for white_player_name in config.tournament.iter() {
                 for black_player_name in config.tournament.iter() {
-                    play_match(&config, white_player_name, black_player_name);
+                    if !(skip_self && white_player_name == black_player_name) {
+                        play_match(&config, white_player_name, black_player_name);
+                    }
                 }
             }
         }
