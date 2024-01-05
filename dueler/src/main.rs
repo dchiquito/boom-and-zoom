@@ -1,10 +1,13 @@
+use std::collections::HashMap;
+use std::fmt::Debug;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::process::{ChildStdin, ChildStdout, Stdio};
 use std::time::Duration;
 
-use baz_core::{Board, Color};
+use ascii_table::AsciiTable;
+use baz_core::{Board, Color, Winner};
 use baz_dueler::deserialize_move;
 use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
@@ -123,7 +126,36 @@ fn build_and_copy(player: &PlayerInfo, build_dir: &Path) {
         .expect("Failed to navigate back to the working directory");
 }
 
-fn play_match(config: &Config, white_player_name: &str, black_player_name: &str) {
+#[derive(Default)]
+struct MatchResult {
+    white: usize,
+    black: usize,
+    draw: usize,
+}
+impl Debug for MatchResult {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}/{}({})", self.white, self.black, self.draw)
+    }
+}
+
+fn play_match(
+    games: usize,
+    config: &Config,
+    white_player_name: &str,
+    black_player_name: &str,
+) -> MatchResult {
+    let mut result = MatchResult::default();
+    for _ in 0..games {
+        match play_game(config, white_player_name, black_player_name) {
+            Winner::White => result.white += 1,
+            Winner::Black => result.black += 1,
+            Winner::Draw => result.draw += 1,
+        }
+    }
+    result
+}
+
+fn play_game(config: &Config, white_player_name: &str, black_player_name: &str) -> Winner {
     println!("{white_player_name} vs. {black_player_name}");
     let white_player = config.player(white_player_name);
     let black_player = config.player(black_player_name);
@@ -153,19 +185,20 @@ fn play_match(config: &Config, white_player_name: &str, black_player_name: &str)
         .expect("Failed to write to black process");
     let mut board = Board::default();
     let mut current_color = Color::White;
+    // TODO max turn cutoff results in draw
     while board.winner().is_none() {
         // println!("{board:?}");
-        std::thread::sleep(Duration::from_millis(1));
+        // std::thread::sleep(Duration::from_millis(1));
         board = match current_color {
             Color::White => play_turn(&board, &mut white_stdout, &mut black_stdin),
             Color::Black => play_turn(&board, &mut black_stdout, &mut white_stdin),
         };
-        std::thread::sleep(Duration::from_millis(1));
+        // std::thread::sleep(Duration::from_millis(1));
         current_color = current_color.invert();
     }
-    println!("Winner! {:?}", board.winner());
     white_process.kill().expect("Failed to kill white process");
     black_process.kill().expect("Failed to kill black process");
+    board.winner().unwrap()
 }
 
 fn play_turn(board: &Board, stdout: &mut ChildStdout, stdin: &mut ChildStdin) -> Board {
@@ -185,6 +218,28 @@ fn play_turn(board: &Board, stdout: &mut ChildStdout, stdin: &mut ChildStdin) ->
     new_board
 }
 
+fn print_results(tournament: &[String], results: &HashMap<(&str, &str), MatchResult>) {
+    let mut table = AsciiTable::default();
+    for (i, player) in tournament.iter().enumerate() {
+        table.column(i + 1).set_header(player);
+    }
+    let data: Vec<Vec<String>> = tournament
+        .iter()
+        .map(|white| {
+            std::iter::once(white.to_string())
+                .chain(tournament.iter().map(|black| {
+                    if let Some(result) = results.get(&(white, black)) {
+                        format!("{result:?}")
+                    } else {
+                        "".to_string()
+                    }
+                }))
+                .collect()
+        })
+        .collect();
+    table.print(data);
+}
+
 #[derive(Parser, Debug)]
 #[command(author, version)]
 struct Args {
@@ -200,6 +255,7 @@ enum Commands {
         update: bool,
         #[arg(long)]
         skip_self: bool,
+        games: usize,
     },
 }
 
@@ -215,19 +271,28 @@ fn main() {
                 update_artifact(player);
             }
         }
-        Commands::Play { update, skip_self } => {
+        Commands::Play {
+            update,
+            skip_self,
+            games,
+        } => {
             if update {
                 for player_name in config.tournament.iter() {
                     update_artifact(config.player(player_name));
                 }
             }
+            let mut results: HashMap<(&str, &str), MatchResult> = HashMap::new();
             for white_player_name in config.tournament.iter() {
                 for black_player_name in config.tournament.iter() {
                     if !(skip_self && white_player_name == black_player_name) {
-                        play_match(&config, white_player_name, black_player_name);
+                        results.insert(
+                            (white_player_name, black_player_name),
+                            play_match(games, &config, white_player_name, black_player_name),
+                        );
                     }
                 }
             }
+            print_results(&config.tournament, &results);
         }
     }
 }

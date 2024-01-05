@@ -1,5 +1,5 @@
 players:
-  - name: foo
+  - name: git
     args: [a]
     git:
       repo: https://github.com/dchiquito/boom-and-zoom
@@ -21,13 +21,19 @@ players:
     workdir: ../cli/
     build: cargo build --release
     artifact: ../target/release/baz_cli
+  - name: go-faster
+    args: ["play", "go-faster"]
+    workdir: ../cli/
+    build: cargo build --release
+    artifact: ../target/release/baz_cli
   - name: genius
     args: ["play", "genius"]
     workdir: ../cli/
     build: cargo build --release
     artifact: ../target/release/baz_cli
 tournament:
-  # - random-forward
-  # - random
-  # - go-fast
+  - random
+  - random-forward
+  - go-fast
+  - go-faster
   - genius
