@@ -25,6 +25,8 @@ impl GamePlayer for ForwardRandomPlayer {
                 },
                 Move::Score(_) => true,
                 Move::Boom(_) => false,
+                // While technically a legal move, conceding will never be suggested
+                Move::Concede => unreachable!(),
             })
             .choose(&mut rng)
             .unwrap_or_else(|| RandomPlayer().decide(board, color))

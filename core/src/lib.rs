@@ -220,6 +220,7 @@ pub enum Move {
     Boom(usize),
     Zoom(usize, Position),
     Score(usize),
+    Concede,
 }
 
 #[derive(Clone)]
@@ -291,6 +292,7 @@ impl Board {
                 }
                 new_board.pieces[*idx].height = Height::Dead;
             }
+            Move::Concede => {}
         }
         new_board
     }

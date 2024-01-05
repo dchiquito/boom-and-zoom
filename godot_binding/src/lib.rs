@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use baz_core::{Board, Game, GamePlayer, Move};
-use baz_players::{GeniusHeuristic, GoFasterHeuristic, HResult, MinMaxPlayer};
+use baz_players::{GeniusHeuristic, HResult, MinMaxPlayer};
 use godot::engine::{Node, NodeVirtual};
 use godot::prelude::*;
 use num::Rational32;
@@ -119,6 +119,8 @@ impl GodotGameBoard {
                     y: pos.y() as f32,
                 },
                 Move::Score(_i) => Vector2 { x: -1.0, y: -1.0 },
+                // While technically a legal move, conceding will never be suggested
+                Move::Concede => unreachable!(),
             })
             .collect()
         // Array::new()

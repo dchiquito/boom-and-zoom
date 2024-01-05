@@ -1,4 +1,4 @@
-use baz_core::{Board, Color, Height, Move, Piece, Winner};
+use baz_core::{Board, Color, Height, Winner};
 use num::{rational::Rational32, ToPrimitive};
 
 use crate::heuristic::{HResult, Heuristic};

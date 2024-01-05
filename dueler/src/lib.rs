@@ -5,6 +5,7 @@ pub fn serialize_move(mov: &Move) -> String {
         Move::Boom(index) => format!("Boom {index}"),
         Move::Zoom(index, pos) => format!("Zoom {} {}", index, i8::from(*pos)),
         Move::Score(index) => format!("Score {index}"),
+        Move::Concede => "Concede".to_string(),
     }
 }
 pub fn deserialize_move(line: &str) -> Move {
@@ -21,6 +22,8 @@ pub fn deserialize_move(line: &str) -> Move {
         )
     } else if let Some(remainder) = line.strip_prefix("Score ") {
         Move::Score(remainder.trim_end().parse().expect("Invalid index"))
+    } else if line == "Concede\n" {
+        Move::Concede
     } else {
         panic!("Unable to deserialize {line}")
     }
