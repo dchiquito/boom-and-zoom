@@ -1,13 +1,13 @@
 players:
   - name: foo
-    args: a
+    args: [a]
     git:
       repo: https://github.com/dchiquito/boom-and-zoom
       target: main
     build: cargo build --bin baz_cli --release
     artifact: target/release/baz_cli
   - name: bar
-    args:
+    args: []
     workdir: ../cli/
     build: cargo build --release
     artifact: ../target/release/baz_cli
