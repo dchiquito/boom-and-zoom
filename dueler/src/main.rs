@@ -72,6 +72,7 @@ fn update_artifact(player: &PlayerInfo) {
 }
 
 fn update_git_artifact(player: &PlayerInfo, repo: &str, target: &str) {
+    let original_dir = std::env::current_dir().expect("Failed to get the current dir");
     let repo_dir = PathBuf::from(format!("git/{}", player.name));
     if !repo_dir.exists()
         && !std::process::Command::new("git")
@@ -84,6 +85,7 @@ fn update_git_artifact(player: &PlayerInfo, repo: &str, target: &str) {
     {
         panic!("Failed to clone git repo {repo}")
     }
+    std::env::set_current_dir(&repo_dir).expect("Failed to navigate to the build directory");
     if !std::process::Command::new("git")
         .arg("pull")
         .status()
@@ -101,6 +103,8 @@ fn update_git_artifact(player: &PlayerInfo, repo: &str, target: &str) {
     {
         panic!("Failed to git checkout {target}")
     }
+    std::env::set_current_dir(original_dir)
+        .expect("Failed to navigate back to the working directory");
     build_and_copy(player, &repo_dir);
 }
 
