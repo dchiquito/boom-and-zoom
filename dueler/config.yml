@@ -1,6 +1,6 @@
 players:
-  - name: git
-    args: [a]
+  - name: git-genius
+    args: ["play", "genius"]
     git:
       repo: https://github.com/dchiquito/boom-and-zoom
       target: main
@@ -32,8 +32,5 @@ players:
     build: cargo build --release
     artifact: ../target/release/baz_cli
 tournament:
-  - random
-  - random-forward
-  - go-fast
-  - go-faster
+  - git-genius
   - genius

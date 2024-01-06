@@ -133,7 +133,7 @@ where
             last_best_move
         );
         // Intentionally ignore the abortive partially calculated result
-        last_best_move.1.unwrap_or(Move::Concede)
+        last_best_move.1.unwrap_or(Move::Concede(*color))
     }
 }
 

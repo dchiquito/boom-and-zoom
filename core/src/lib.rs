@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Color {
     White,
     Black,
@@ -220,7 +220,7 @@ pub enum Move {
     Boom(usize),
     Zoom(usize, Position),
     Score(usize),
-    Concede,
+    Concede(Color),
 }
 
 #[derive(Clone)]
@@ -228,6 +228,7 @@ pub struct Board {
     pub pieces: [Piece; 8],
     pub black_score: u8,
     pub white_score: u8,
+    pub victory_by_concession: Option<Color>,
 }
 impl Default for Board {
     fn default() -> Board {
@@ -244,6 +245,7 @@ impl Default for Board {
             ],
             black_score: 0,
             white_score: 0,
+            victory_by_concession: None,
         }
     }
 }
@@ -292,7 +294,9 @@ impl Board {
                 }
                 new_board.pieces[*idx].height = Height::Dead;
             }
-            Move::Concede => {}
+            Move::Concede(color) => {
+                new_board.victory_by_concession = Some(color.invert());
+            }
         }
         new_board
     }
