@@ -31,6 +31,11 @@ players:
     workdir: ../cli/
     build: cargo build --release
     artifact: ../target/release/baz_cli
+  - name: naive
+    args: ["play", "naive"]
+    workdir: ../cli/
+    build: cargo build --release
+    artifact: ../target/release/baz_cli
 tournament:
-  - git-genius
+  - naive
   - genius

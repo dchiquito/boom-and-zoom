@@ -120,7 +120,7 @@ impl GodotGameBoard {
                 },
                 Move::Score(_i) => Vector2 { x: -1.0, y: -1.0 },
                 // While technically a legal move, conceding will never be suggested
-                Move::Concede => unreachable!(),
+                Move::Concede(_) => unreachable!(),
             })
             .collect()
         // Array::new()

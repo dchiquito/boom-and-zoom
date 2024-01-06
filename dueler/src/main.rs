@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use std::process::{ChildStdin, ChildStdout, Stdio};
 
 use ascii_table::AsciiTable;
-use baz_core::{Board, Color, Move, Winner};
+use baz_core::{Board, Color, Winner};
 use baz_dueler::deserialize_move;
 use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};

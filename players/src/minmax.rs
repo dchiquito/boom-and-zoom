@@ -4,6 +4,7 @@ use std::time::{Duration, Instant};
 
 use crate::heuristic::Heuristic;
 use baz_core::*;
+use rand::seq::SliceRandom;
 
 pub struct MinMaxPlayer<H, T>
 where
@@ -63,16 +64,14 @@ where
                 return (self.heuristic.evaluate(board, color), None);
             }
         }
-        let piece_color = if maximizing {
-            color.clone()
-        } else {
-            color.invert()
-        };
+        let piece_color = if maximizing { *color } else { color.invert() };
         let mut scores_and_boards = board
             .legal_moves(&piece_color)
             .map(|m| (m, board.apply_move(&m)))
             .map(|(m, b)| (self.heuristic.evaluate(&b, color), m, b))
             .collect::<Vec<(T, Move, Board)>>();
+        let mut rng = rand::thread_rng();
+        scores_and_boards.shuffle(&mut rng);
         scores_and_boards
             .sort_by(|(h1, _, _), (h2, _, _)| if maximizing { h2.cmp(h1) } else { h1.cmp(h2) });
         let mut best_score = if maximizing { H::min() } else { H::max() };

@@ -4,7 +4,7 @@ use baz_core::{Board, Color, GamePlayer, Move, Position};
 use baz_dueler::StdioGamePlayer;
 use baz_players::{
     ForwardRandomPlayer, GeniusHeuristic, GoFastHeuristic, GoFasterHeuristic, HResult,
-    HeuristicPlayer, MinMaxPlayer, RandomPlayer,
+    HeuristicPlayer, MinMaxPlayer, NaiveHeuristic, RandomPlayer,
 };
 use clap::{Parser, Subcommand};
 use num::Rational32;
@@ -111,21 +111,7 @@ enum PlayerOptions {
     GoFast,
     GoFaster,
     Genius,
-}
-
-impl FromStr for PlayerOptions {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "random" => Ok(PlayerOptions::Random),
-            "random-forward" => Ok(PlayerOptions::RandomForward),
-            "go-fast" => Ok(PlayerOptions::GoFast),
-            "go-faster" => Ok(PlayerOptions::GoFaster),
-            "genius" => Ok(PlayerOptions::Genius),
-            _ => Err("unrecognized player".to_string()),
-        }
-    }
+    Naive,
 }
 
 enum AIPlayer {
@@ -134,6 +120,7 @@ enum AIPlayer {
     GoFast(HeuristicPlayer<GoFastHeuristic, i8>),
     GoFaster(HeuristicPlayer<GoFasterHeuristic, i8>),
     Genius(MinMaxPlayer<GeniusHeuristic, HResult<Rational32>>),
+    Naive(MinMaxPlayer<NaiveHeuristic, HResult<Rational32>>),
 }
 impl From<PlayerOptions> for AIPlayer {
     fn from(value: PlayerOptions) -> Self {
@@ -148,6 +135,10 @@ impl From<PlayerOptions> for AIPlayer {
                 GeniusHeuristic(),
                 Duration::from_millis(10),
             )),
+            PlayerOptions::Naive => AIPlayer::Naive(MinMaxPlayer::new(
+                NaiveHeuristic(),
+                Duration::from_millis(10),
+            )),
         }
     }
 }
@@ -159,6 +150,7 @@ impl GamePlayer for AIPlayer {
             AIPlayer::GoFast(player) => player.decide(board, color),
             AIPlayer::GoFaster(player) => player.decide(board, color),
             AIPlayer::Genius(player) => player.decide(board, color),
+            AIPlayer::Naive(player) => player.decide(board, color),
         }
     }
 }

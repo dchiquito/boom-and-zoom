@@ -1,6 +1,6 @@
 use baz_core::{Board, Color};
-use baz_players::{GeniusHeuristic, GoFastHeuristic, GoFasterHeuristic, Heuristic, RandomPlayer};
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use baz_players::{GeniusHeuristic, GoFastHeuristic, GoFasterHeuristic, Heuristic, NaiveHeuristic};
+use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let board = Board::default();
@@ -21,6 +21,12 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("genius heuristic", |b| {
         b.iter(|| {
             genius.evaluate(&board, &Color::White);
+        })
+    });
+    let mut naive = NaiveHeuristic();
+    c.bench_function("naive heuristic", |b| {
+        b.iter(|| {
+            naive.evaluate(&board, &Color::White);
         })
     });
 }
