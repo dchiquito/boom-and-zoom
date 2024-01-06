@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum Color {
     White,
     Black,
@@ -27,7 +27,7 @@ impl FromStr for Color {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Winner {
     White,
     Black,
@@ -44,7 +44,7 @@ impl Winner {
     }
 }
 
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
 pub struct Position {
     index: i8,
     x: i8,
@@ -71,6 +71,16 @@ impl From<i8> for Position {
 impl From<Position> for i8 {
     fn from(pos: Position) -> Self {
         pos.x + (pos.y * 8)
+    }
+}
+impl From<u8> for Position {
+    fn from(index: u8) -> Self {
+        Position::from(index as i8)
+    }
+}
+impl From<Position> for u8 {
+    fn from(pos: Position) -> Self {
+        i8::from(pos) as u8
     }
 }
 impl std::fmt::Debug for Position {
@@ -128,7 +138,7 @@ pub enum PositionOffset {
     Invalid,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Height {
     Dead,
     One,
@@ -190,7 +200,7 @@ impl Height {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Hash)]
 pub struct Piece {
     pub color: Color,
     pub position: Position,
@@ -213,6 +223,19 @@ impl Piece {
         let height = i8::from(&self.height);
         (dx <= height && (dy == 0 || dy == dx)) || (dy <= height && dx == 0)
     }
+    // There are not enough bits to serialize the color :(
+    pub fn as_u8(&self) -> u8 {
+        (u8::from(&self.height) << 6) + u8::from(self.position)
+    }
+    pub fn from_u8(color: Color, u: u8) -> Piece {
+        let position = Position::from(u & 0b111111);
+        let height = Height::try_from(u >> 6).unwrap();
+        Piece {
+            color,
+            position,
+            height,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -223,7 +246,7 @@ pub enum Move {
     Concede(Color),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Hash)]
 pub struct Board {
     pub pieces: [Piece; 8],
     pub black_score: u8,
@@ -348,6 +371,35 @@ impl Board {
             Some(Winner::White)
         } else {
             None
+        }
+    }
+    pub fn compress(&self) -> (u64, u8, u8) {
+        let pieces = ((self.pieces[7].as_u8() as u64) << 56)
+            + ((self.pieces[6].as_u8() as u64) << 48)
+            + ((self.pieces[5].as_u8() as u64) << 40)
+            + ((self.pieces[4].as_u8() as u64) << 32)
+            + ((self.pieces[3].as_u8() as u64) << 24)
+            + ((self.pieces[2].as_u8() as u64) << 16)
+            + ((self.pieces[1].as_u8() as u64) << 8)
+            + (self.pieces[0].as_u8() as u64);
+        (pieces, self.white_score, self.black_score)
+    }
+    pub fn decompress(pieces: u64, white_score: u8, black_score: u8) -> Board {
+        let pieces = [
+            Piece::from_u8(Color::White, (pieces & 0xff) as u8),
+            Piece::from_u8(Color::White, ((pieces >> 8) & 0xff) as u8),
+            Piece::from_u8(Color::White, ((pieces >> 16) & 0xff) as u8),
+            Piece::from_u8(Color::White, ((pieces >> 24) & 0xff) as u8),
+            Piece::from_u8(Color::Black, ((pieces >> 32) & 0xff) as u8),
+            Piece::from_u8(Color::Black, ((pieces >> 40) & 0xff) as u8),
+            Piece::from_u8(Color::Black, ((pieces >> 48) & 0xff) as u8),
+            Piece::from_u8(Color::Black, ((pieces >> 56) & 0xff) as u8),
+        ];
+        Board {
+            pieces,
+            white_score,
+            black_score,
+            victory_by_concession: None,
         }
     }
 }
@@ -527,6 +579,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rand::{thread_rng, RngCore};
 
     macro_rules! zoom {
         ($index:expr, $square:tt) => {
@@ -688,5 +741,21 @@ mod tests {
             board.legal_moves(&Color::Black).collect::<Vec<Move>>(),
             vec![]
         );
+    }
+    #[test]
+    fn fuzz_board_compression() {
+        let mut rand = thread_rng();
+        for _ in 0..100000 {
+            let (pieces1, white_score1, black_score1) = (
+                rand.next_u64(),
+                (rand.next_u32() % 256) as u8,
+                (rand.next_u32() % 256) as u8,
+            );
+            let board = Board::decompress(pieces1, white_score1, black_score1);
+            let (pieces2, white_score2, black_score2) = board.compress();
+            assert_eq!(pieces1, pieces2);
+            assert_eq!(white_score1, white_score2);
+            assert_eq!(black_score1, black_score2);
+        }
     }
 }
