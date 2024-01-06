@@ -47,10 +47,6 @@ where
             .par_iter()
             .map(|(_estimate, new_move, new_board)| {
                 let (new_score, _) = self.minimax(new_board, color, false, H::min(), H::max(), 1);
-                // if new_score > best_score {
-                //     best_score = new_score;
-                //     best_move = Some(new_move);
-                // }
                 (new_score, *new_move)
             })
             .max_by_key(|(score, _move)| score.clone())

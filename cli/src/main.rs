@@ -1,4 +1,4 @@
-use std::{str::FromStr, time::Duration};
+use std::time::Duration;
 
 use baz_core::{Board, Color, GamePlayer, Move, Position};
 use baz_dueler::StdioGamePlayer;

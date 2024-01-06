@@ -5,7 +5,6 @@ use crate::heuristic::{HResult, Heuristic};
 
 pub struct NaiveHeuristic();
 
-const LOGIT: bool = false;
 impl Heuristic<HResult<Rational32>> for NaiveHeuristic {
     fn evaluate(&self, board: &baz_core::Board, color: &baz_core::Color) -> HResult<Rational32> {
         if let Some(final_score) = match board.winner() {
