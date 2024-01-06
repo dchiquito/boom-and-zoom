@@ -37,5 +37,5 @@ players:
     build: cargo build --release
     artifact: ../target/release/baz_cli
 tournament:
-  - naive
+  - git-genius
   - genius

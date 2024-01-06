@@ -150,11 +150,7 @@ impl Heuristic<HResult<Rational32>> for GeniusHeuristic {
     //         estimate.to_f64().unwrap(),
     //     );
     // }
-    fn evaluate(
-        &mut self,
-        board: &baz_core::Board,
-        color: &baz_core::Color,
-    ) -> HResult<Rational32> {
+    fn evaluate(&self, board: &baz_core::Board, color: &baz_core::Color) -> HResult<Rational32> {
         if let Some(final_score) = match board.winner() {
             Some(Winner::White) => {
                 if color == &Color::White {

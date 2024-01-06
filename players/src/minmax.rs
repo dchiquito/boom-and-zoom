@@ -5,6 +5,7 @@ use std::time::{Duration, Instant};
 use crate::heuristic::Heuristic;
 use baz_core::*;
 use rand::seq::SliceRandom;
+use rayon::prelude::*;
 
 pub struct MinMaxPlayer<H, T>
 where
@@ -12,7 +13,6 @@ where
     T: Clone + Debug + Ord,
 {
     heuristic: H,
-    iterations: usize,
     max_depth: usize,
     max_width: usize,
     time_per_turn: Duration,
@@ -21,13 +21,12 @@ where
 }
 impl<H, T> MinMaxPlayer<H, T>
 where
-    H: Heuristic<T>,
-    T: Clone + Debug + Ord,
+    H: Heuristic<T> + Sync,
+    T: Clone + Debug + Ord + Sync + Send,
 {
     pub fn new(heuristic: H, time_per_turn: Duration) -> MinMaxPlayer<H, T> {
         MinMaxPlayer {
             heuristic,
-            iterations: 0,
             max_depth: 0,
             max_width: 0,
             time_per_turn,
@@ -35,8 +34,31 @@ where
             phantom: PhantomData,
         }
     }
+    fn minimax0(&self, board: &Board, color: &Color) -> (T, Move) {
+        let mut scores_and_boards = board
+            .legal_moves(color)
+            .map(|m| (m, board.apply_move(&m)))
+            .map(|(m, b)| (self.heuristic.evaluate(&b, color), m, b))
+            .collect::<Vec<(T, Move, Board)>>();
+        let mut rng = rand::thread_rng();
+        scores_and_boards.shuffle(&mut rng);
+        scores_and_boards.sort_by(|(h1, _, _), (h2, _, _)| h2.cmp(h1));
+        let (best_score, best_move) = scores_and_boards
+            .par_iter()
+            .map(|(_estimate, new_move, new_board)| {
+                let (new_score, _) = self.minimax(new_board, color, false, H::min(), H::max(), 1);
+                // if new_score > best_score {
+                //     best_score = new_score;
+                //     best_move = Some(new_move);
+                // }
+                (new_score, *new_move)
+            })
+            .max_by_key(|(score, _move)| score.clone())
+            .unwrap_or((H::min(), Move::Concede(*color)));
+        (best_score, best_move)
+    }
     fn minimax(
-        &mut self,
+        &self,
         board: &Board,
         color: &Color,
         maximizing: bool,
@@ -55,7 +77,6 @@ where
                 return (H::draw(), None);
             }
         }
-        self.iterations += 1;
         if depth >= self.max_depth {
             return (self.heuristic.evaluate(board, color), None);
         }
@@ -109,30 +130,29 @@ where
 
 impl<H, T> GamePlayer for MinMaxPlayer<H, T>
 where
-    H: Heuristic<T>,
-    T: Clone + Debug + Ord,
+    H: Heuristic<T> + Sync,
+    T: Clone + Debug + Ord + Sync + Send,
 {
     fn decide(&mut self, board: &Board, color: &Color) -> Move {
         let now = Instant::now();
         self.timeout = Some(now + self.time_per_turn);
-        let mut best_move = (H::min(), None);
-        let mut last_best_move = (H::min(), None);
+        let mut best_move = (H::min(), Move::Concede(*color));
+        let mut last_best_move = (H::min(), Move::Concede(*color));
         self.max_depth = 3;
         self.max_width = 6; // TODO tune this
         while Instant::now() - now < self.time_per_turn {
             last_best_move = best_move;
-            best_move = self.minimax(board, color, true, H::min(), H::max(), 0);
+            best_move = self.minimax0(board, color);
             self.max_depth += 1;
         }
         let time_taken = Instant::now() - now;
         eprintln!(
-            "Decided after {time_taken:?}, {} iterations, and a max depth of {}: {:?}",
-            self.iterations,
+            "Decided after {time_taken:?} and a max depth of {}: {:?}",
             self.max_depth - 2,
             last_best_move
         );
         // Intentionally ignore the abortive partially calculated result
-        last_best_move.1.unwrap_or(Move::Concede(*color))
+        last_best_move.1
     }
 }
 

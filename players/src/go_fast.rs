@@ -6,7 +6,7 @@ use crate::heuristic::{Heuristic, HeuristicPlayer};
 pub struct GoFastHeuristic();
 
 impl Heuristic<i8> for GoFastHeuristic {
-    fn evaluate(&mut self, board: &baz_core::Board, color: &baz_core::Color) -> i8 {
+    fn evaluate(&self, board: &baz_core::Board, color: &baz_core::Color) -> i8 {
         -board
             .pieces
             .iter()
@@ -47,8 +47,8 @@ impl GoFastHeuristic {
 pub struct GoFasterHeuristic();
 
 impl Heuristic<i8> for GoFasterHeuristic {
-    fn evaluate(&mut self, board: &baz_core::Board, color: &Color) -> i8 {
-        let mut heuristic = GoFastHeuristic();
+    fn evaluate(&self, board: &baz_core::Board, color: &Color) -> i8 {
+        let heuristic = GoFastHeuristic();
         // let a = heuristic.evaluate(board, color);
         // let b = heuristic.evaluate(board, &color.invert());
         // println!("{} - {} = {}", a, b, a - b);

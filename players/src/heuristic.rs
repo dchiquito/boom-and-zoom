@@ -56,7 +56,7 @@ pub trait Heuristic<T>
 where
     T: Clone + Ord,
 {
-    fn evaluate(&mut self, board: &Board, color: &Color) -> T;
+    fn evaluate(&self, board: &Board, color: &Color) -> T;
     fn min() -> T;
     fn max() -> T;
     fn draw() -> T;
