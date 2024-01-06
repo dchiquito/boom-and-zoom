@@ -328,6 +328,12 @@ impl Board {
         }
     }
     pub fn winner(&self) -> Option<Winner> {
+        if let Some(color) = self.victory_by_concession {
+            return Some(match color {
+                Color::White => Winner::White,
+                Color::Black => Winner::Black,
+            });
+        }
         let white_potential: u8 = self.pieces[0..4].iter().map(|p| u8::from(&p.height)).sum();
         let black_potential: u8 = self.pieces[4..8].iter().map(|p| u8::from(&p.height)).sum();
         if white_potential == 0 || black_potential == 0 {
